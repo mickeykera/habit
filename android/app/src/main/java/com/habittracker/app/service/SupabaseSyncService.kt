@@ -96,10 +96,7 @@ class SupabaseSyncService(context: Context) {
         }
     }
 
-    fun getDemoFriends(): List<FriendStats> = listOf(
-        FriendStats(UUID.randomUUID().toString(), "Sarah K", "SK", 0.92, 47, 14),
-        FriendStats(UUID.randomUUID().toString(), "Marcus J", "MJ", 0.85, 38, 7),
-        FriendStats(UUID.randomUUID().toString(), "Aisha P", "AP", 0.78, 31, 5),
-        FriendStats(UUID.randomUUID().toString(), "David L", "DL", 0.65, 22, 3)
-    )
+    fun getFriends(): List<FriendStats> = emptyList()
+
+    fun getDemoFriends(): List<FriendStats> = emptyList()
 }

@@ -37,20 +37,28 @@ struct ContentView: View {
             Color.pageGround
                 .ignoresSafeArea()
 
-            Group {
-                switch selectedTab {
-                case .today:
-                    TodayView()
-                case .calendar:
-                    CalendarView()
-                case .friends:
-                    FriendsView()
-                case .report:
-                    ReportView()
-                case .settings:
-                    SettingsView()
-                }
+            ZStack {
+                TodayView()
+                    .opacity(selectedTab == .today ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .today)
+
+                CalendarView()
+                    .opacity(selectedTab == .calendar ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .calendar)
+
+                FriendsView()
+                    .opacity(selectedTab == .friends ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .friends)
+
+                ReportView()
+                    .opacity(selectedTab == .report ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .report)
+
+                SettingsView()
+                    .opacity(selectedTab == .settings ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .settings)
             }
+            .animation(.easeInOut(duration: 0.22), value: selectedTab)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // Floating Pill Navigation Bar

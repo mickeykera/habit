@@ -376,16 +376,7 @@ final class SupabaseSyncService: @unchecked Sendable {
 
     // MARK: - Demo Data
 
-    static let demoFriends: [FriendStats] = [
-        FriendStats(id: UUID(), displayName: "Sarah K", avatarInitials: "SK",
-                    completionRate: 0.92, totalCompletions: 47, currentStreak: 14),
-        FriendStats(id: UUID(), displayName: "Marcus J", avatarInitials: "MJ",
-                    completionRate: 0.85, totalCompletions: 38, currentStreak: 7),
-        FriendStats(id: UUID(), displayName: "Aisha P", avatarInitials: "AP",
-                    completionRate: 0.78, totalCompletions: 31, currentStreak: 5),
-        FriendStats(id: UUID(), displayName: "David L", avatarInitials: "DL",
-                    completionRate: 0.65, totalCompletions: 22, currentStreak: 3),
-    ]
+    static let demoFriends: [FriendStats] = []
 
     // MARK: - Helpers
 

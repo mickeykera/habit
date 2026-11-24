@@ -11,7 +11,7 @@ struct FriendsView: View {
     @State private var showError = false
 
     private var displayFriends: [FriendStats] {
-        syncService.isConfigured ? syncService.friends : SupabaseSyncService.demoFriends
+        syncService.friends
     }
 
     var body: some View {

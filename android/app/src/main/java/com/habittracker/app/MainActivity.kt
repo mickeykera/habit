@@ -3,6 +3,8 @@ package com.habittracker.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,7 +32,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +44,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.habittracker.app.data.AppDatabase
+import com.habittracker.app.data.Habit
 import com.habittracker.app.service.SupabaseSyncService
 import com.habittracker.app.theme.CardSurface
 import com.habittracker.app.theme.CobaltBlue
@@ -53,7 +58,9 @@ import com.habittracker.app.ui.calendar.CalendarScreen
 import com.habittracker.app.ui.friends.FriendsScreen
 import com.habittracker.app.ui.report.ReportScreen
 import com.habittracker.app.ui.settings.SettingsScreen
+import com.habittracker.app.ui.today.AddHabitDialog
 import com.habittracker.app.ui.today.TodayScreen
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +83,8 @@ data class NavItem(val label: String, val icon: ImageVector)
 @Composable
 fun MainScreen(habitDao: com.habittracker.app.data.HabitDao, syncService: SupabaseSyncService) {
     var selectedIndex by remember { mutableIntStateOf(0) }
+    var showAddHabitDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val navItems = listOf(
         NavItem("Today", Icons.Default.Home),
@@ -111,7 +120,7 @@ fun MainScreen(habitDao: com.habittracker.app.data.HabitDao, syncService: Supaba
                                     .size(42.dp)
                                     .clip(CircleShape)
                                     .background(CobaltBlue)
-                                    .clickable { selectedIndex = 0 },
+                                    .clickable { showAddHabitDialog = true },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -150,13 +159,37 @@ fun MainScreen(habitDao: com.habittracker.app.data.HabitDao, syncService: Supaba
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            when (selectedIndex) {
-                0 -> TodayScreen(habitDao)
-                1 -> CalendarScreen(habitDao)
-                2 -> FriendsScreen(syncService)
-                3 -> ReportScreen(habitDao)
-                4 -> SettingsScreen(habitDao, syncService)
+            Crossfade(
+                targetState = selectedIndex,
+                animationSpec = tween(durationMillis = 220),
+                label = "tabCrossfade"
+            ) { targetIndex ->
+                when (targetIndex) {
+                    0 -> TodayScreen(habitDao, onOpenAdd = { showAddHabitDialog = true })
+                    1 -> CalendarScreen(habitDao, onOpenAdd = { showAddHabitDialog = true })
+                    2 -> FriendsScreen(syncService)
+                    3 -> ReportScreen(habitDao)
+                    4 -> SettingsScreen(habitDao, syncService)
+                }
             }
+        }
+
+        if (showAddHabitDialog) {
+            AddHabitDialog(
+                onDismiss = { showAddHabitDialog = false },
+                onSave = { title, type, days ->
+                    scope.launch {
+                        habitDao.insertHabit(
+                            Habit(
+                                title = title,
+                                type = type.value,
+                                scheduleDays = days.joinToString(",")
+                            )
+                        )
+                    }
+                    showAddHabitDialog = false
+                }
+            )
         }
     }
 }

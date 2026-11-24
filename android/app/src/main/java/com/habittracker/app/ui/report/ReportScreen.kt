@@ -2,6 +2,8 @@ package com.habittracker.app.ui.report
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,19 +15,36 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.habittracker.app.data.Habit
 import com.habittracker.app.data.HabitDao
 import com.habittracker.app.theme.CardSurface
 import com.habittracker.app.theme.CobaltBlue
@@ -36,9 +55,23 @@ import com.habittracker.app.theme.PageGround
 import com.habittracker.app.theme.PrimaryText
 import com.habittracker.app.theme.SecondaryText
 import com.habittracker.app.ui.components.HairlineDivider
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+enum class ReportTab {
+    WEEKLY, MONTHLY, YEARLY
+}
 
 @Composable
 fun ReportScreen(habitDao: HabitDao) {
+    var selectedTab by remember { mutableStateOf(ReportTab.WEEKLY) }
+    var selectedWeekStart by remember {
+        val today = LocalDate.now()
+        val monday = today.minusDays(((today.dayOfWeek.value + 6) % 7).toLong())
+        mutableStateOf(monday)
+    }
+    var selectedYear by remember { mutableIntStateOf(LocalDate.now().year) }
+
     val habits by habitDao.getActiveHabits().collectAsState(initial = emptyList())
     val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
 
@@ -46,123 +79,313 @@ fun ReportScreen(habitDao: HabitDao) {
         modifier = Modifier
             .fillMaxSize()
             .background(PageGround)
-            .padding(16.dp)
     ) {
-        Text(
-            text = "Report",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Medium,
-            color = PrimaryText
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Matrix ledger card
-        Column(
+        // Top Underline Tabs
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(CardSurface)
-                .border(1.dp, Hairline, RoundedCornerShape(8.dp))
-                .padding(12.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Header Row
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Habit",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MutedText,
-                    modifier = Modifier.weight(1f)
-                )
-                dayLabels.forEach { d ->
-                    Box(modifier = Modifier.width(28.dp), contentAlignment = Alignment.Center) {
-                        Text(d, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MutedText)
-                    }
-                }
-                Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.CenterEnd) {
-                    Text("Total", fontSize = 11.sp, color = MutedText)
-                }
-            }
-
-            HairlineDivider()
-
-            // Habit rows
-            habits.forEach { habit ->
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            ReportTab.entries.forEach { tab ->
+                val isSelected = selectedTab == tab
+                Column(
+                    modifier = Modifier.clickable { selectedTab = tab },
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = habit.title,
-                        fontSize = 14.sp,
-                        color = PrimaryText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        text = tab.name.lowercase().replaceFirstChar { it.uppercase() },
+                        fontSize = 16.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) PrimaryText else MutedText
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(36.dp)
+                            .height(2.dp)
+                            .background(if (isSelected) CobaltBlue else Color.Transparent)
+                    )
+                }
+            }
+        }
 
-                    (0..6).forEach { _ ->
-                        Box(
-                            modifier = Modifier.width(28.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Completed / Scheduled indicator
-                            Box(
-                                modifier = Modifier
-                                    .size(14.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(CobaltBlue)
-                            )
+        HairlineDivider()
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 14.dp)
+        ) {
+            when (selectedTab) {
+                ReportTab.WEEKLY -> {
+                    // Week Switcher < dd/MM ~ dd/MM >
+                    val weekEnd = selectedWeekStart.plusDays(6)
+                    val fmt = DateTimeFormatter.ofPattern("dd/MM")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { selectedWeekStart = selectedWeekStart.minusWeeks(1) }) {
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Prev", tint = PrimaryText)
+                        }
+                        Text(
+                            text = "< ${selectedWeekStart.format(fmt)} ~ ${weekEnd.format(fmt)} >",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = FontFamily.Monospace,
+                            color = PrimaryText
+                        )
+                        IconButton(onClick = { selectedWeekStart = selectedWeekStart.plusWeeks(1) }) {
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next", tint = PrimaryText)
                         }
                     }
 
-                    Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.CenterEnd) {
-                        Text(
-                            text = "100%",
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Medium,
-                            color = SecondaryText
-                        )
-                    }
-                }
-                HairlineDivider()
-            }
+                    Spacer(modifier = Modifier.height(10.dp))
 
-            // Summary row
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    // Ruled Matrix Card
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(CardSurface)
+                            .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+                            .padding(14.dp)
+                    ) {
+                        // Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Habit", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MutedText, modifier = Modifier.weight(1f))
+                            dayLabels.forEach { d ->
+                                Box(modifier = Modifier.width(26.dp), contentAlignment = Alignment.Center) {
+                                    Text(d, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MutedText)
+                                }
+                            }
+                            Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.CenterEnd) {
+                                Text("Total", fontSize = 11.sp, color = MutedText)
+                            }
+                        }
+
+                        HairlineDivider()
+
+                        // Rows
+                        if (habits.isEmpty()) {
+                            Text("No habits found", fontSize = 13.sp, color = MutedText, modifier = Modifier.padding(vertical = 12.dp))
+                        } else {
+                            habits.forEach { habit ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Star, contentDescription = null, tint = CobaltBlue, modifier = Modifier.size(12.dp))
+                                        Spacer(modifier = Modifier.size(6.dp))
+                                        Text(habit.title, fontSize = 13.sp, color = PrimaryText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    }
+
+                                    (0..6).forEach { _ ->
+                                        Box(modifier = Modifier.width(26.dp), contentAlignment = Alignment.Center) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(14.dp)
+                                                    .clip(RoundedCornerShape(3.dp))
+                                                    .background(CobaltBlue)
+                                            )
+                                        }
+                                    }
+
+                                    Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.CenterEnd) {
+                                        Text("100%", fontSize = 11.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.SemiBold, color = CobaltBlue)
+                                    }
+                                }
+                                HairlineDivider()
+                            }
+                        }
+
+                        // Best Day Highlight Row
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Best Day: Wednesday", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = PrimaryText)
+                            Text("100% completed", fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = CobaltBlue)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // 4-column KPI Footer
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ReportKpiBox(modifier = Modifier.weight(1f), title = "Met (%)", value = "90%")
+                        ReportKpiBox(modifier = Modifier.weight(1f), title = "Best Day", value = "We")
+                        ReportKpiBox(modifier = Modifier.weight(1f), title = "Total Done", value = "24")
+                        ReportKpiBox(modifier = Modifier.weight(1f), title = "Best Streak", value = "12d")
+                    }
+                }
+
+                ReportTab.MONTHLY -> {
+                    // Month selector < 2026 Nov >
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = {}) {
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Prev", tint = PrimaryText)
+                        }
+                        Text("< 2026 Nov >", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = PrimaryText)
+                        IconButton(onClick = {}) {
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next", tint = PrimaryText)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 2-column Grid of Mini Monthly Cards
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        habits.take(2).forEach { habit ->
+                            MiniMonthlyCard(modifier = Modifier.weight(1f), title = habit.title)
+                        }
+                    }
+                }
+
+                ReportTab.YEARLY -> {
+                    // Year selector < 2026 >
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { selectedYear -= 1 }) {
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Prev", tint = PrimaryText)
+                        }
+                        Text("< $selectedYear >", fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = PrimaryText)
+                        IconButton(onClick = { selectedYear += 1 }) {
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next", tint = PrimaryText)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Stacked list of habit heatmap cards
+                    habits.forEach { habit ->
+                        YearlyHeatmapCard(habit = habit)
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReportKpiBox(modifier: Modifier = Modifier, title: String, value: String) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(CardSurface)
+            .border(1.dp, Hairline, RoundedCornerShape(12.dp))
+            .padding(vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = CobaltBlue)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(title, fontSize = 10.sp, color = MutedText)
+        }
+    }
+}
+
+@Composable
+private fun MiniMonthlyCard(modifier: Modifier = Modifier, title: String) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(CardSurface)
+            .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+            .padding(12.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText, maxLines = 1)
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(CobaltBlue)
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
             ) {
-                Text(
-                    text = "Daily %",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MutedText,
-                    modifier = Modifier.weight(1f)
-                )
-                dayLabels.forEach { _ ->
-                    Box(modifier = Modifier.width(28.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "80%",
-                            fontSize = 10.sp,
-                            fontFamily = FontFamily.Monospace,
-                            color = SecondaryText
+                Text("PERFECT", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = CobaltLabel)
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        // 7-column day grid
+        Column {
+            for (r in 0 until 4) {
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    for (c in 0 until 7) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(CobaltBlue)
                         )
                     }
                 }
-                Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.CenterEnd) {
-                    Text(
-                        text = "86%",
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.SemiBold,
-                        color = CobaltBlue
-                    )
+            }
+        }
+        HairlineDivider(modifier = Modifier.padding(vertical = 8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("83%", fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = CobaltBlue)
+            Text("25d done", fontSize = 11.sp, color = SecondaryText)
+        }
+    }
+}
+
+@Composable
+private fun YearlyHeatmapCard(habit: Habit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(CardSurface)
+            .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+            .padding(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Star, contentDescription = null, tint = CobaltBlue, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.size(6.dp))
+                Text(habit.title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+            }
+            Text("93.7% · 342D", fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = CobaltBlue)
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        // GitHub-style 52-week contribution heatmap
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            for (w in 0 until 52) {
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    for (d in 0 until 7) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(RoundedCornerShape(1.5.dp))
+                                .background(CobaltBlue)
+                        )
+                    }
                 }
             }
         }

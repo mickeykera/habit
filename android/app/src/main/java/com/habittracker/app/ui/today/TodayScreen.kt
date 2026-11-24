@@ -19,10 +19,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -57,120 +59,267 @@ import com.habittracker.app.ui.components.HairlineDivider
 import com.habittracker.app.ui.components.InverseBadge
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+
+enum class TodayFilter(val label: String) {
+    ALL("All"),
+    BUILD("Build"),
+    QUIT("Quit")
+}
 
 @Composable
-fun TodayScreen(habitDao: HabitDao) {
+fun TodayScreen(
+    habitDao: HabitDao,
+    onOpenAdd: () -> Unit = {}
+) {
     val scope = rememberCoroutineScope()
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var showAddDialog by remember { mutableStateOf(false) }
+    var selectedFilter by remember { mutableStateOf(TodayFilter.ALL) }
+    var showFilterMenu by remember { mutableStateOf(false) }
 
     val activeHabits by habitDao.getActiveHabits().collectAsState(initial = emptyList())
     val selectedDateString = selectedDate.toString()
     val dailyLogs by habitDao.getLogsForDate(selectedDateString).collectAsState(initial = emptyList())
 
     val zeroBasedWeekday = selectedDate.dayOfWeek.value % 7
-    val scheduledHabits = activeHabits.filter { it.isScheduledOn(zeroBasedWeekday) }
+    val scheduledHabits = activeHabits.filter { habit ->
+        val isScheduled = habit.isScheduledOn(zeroBasedWeekday)
+        if (!isScheduled) return@filter false
+        when (selectedFilter) {
+            TodayFilter.ALL -> true
+            TodayFilter.BUILD -> habit.habitType == HabitType.BUILD
+            TodayFilter.QUIT -> habit.habitType == HabitType.QUIT
+        }
+    }
+
     val completedCount = scheduledHabits.count { habit ->
         dailyLogs.any { it.habitId == habit.id && it.isCompleted }
     }
 
-    val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, MMM d") }
-
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = CobaltBlue,
-                contentColor = CobaltLabel,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Habit")
-            }
-        },
-        containerColor = PageGround
-    ) { padding ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(PageGround)
+    ) {
+        // Top Bar
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            // Left: Filter Pill
+            Box {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(CardSurface)
+                        .border(1.dp, Hairline, RoundedCornerShape(16.dp))
+                        .clickable { showFilterMenu = true }
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = selectedFilter.label,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = PrimaryText
+                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Filter",
+                        tint = MutedText,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = showFilterMenu,
+                    onDismissRequest = { showFilterMenu = false }
+                ) {
+                    TodayFilter.entries.forEach { filter ->
+                        DropdownMenuItem(
+                            text = { Text(filter.label) },
+                            onClick = {
+                                selectedFilter = filter
+                                showFilterMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Center: Today Title + Count
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = selectedDate.format(dateFormatter),
-                    fontSize = 28.sp,
+                    text = "Today",
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
-                    color = PrimaryText,
-                    letterSpacing = (-0.5).sp
+                    color = PrimaryText
                 )
                 Text(
                     text = "$completedCount / ${scheduledHabits.size}",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     color = CobaltBlue
                 )
             }
 
-            // 7-day Horizontal Week Strip
-            WeekStrip(
-                selectedDate = selectedDate,
-                onDateSelected = { selectedDate = it }
-            )
+            // Right: + button
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(CardSurface)
+                    .border(1.dp, Hairline, CircleShape)
+                    .clickable { onOpenAdd() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add",
+                    tint = CobaltBlue,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
 
-            HairlineDivider(modifier = Modifier.padding(vertical = 8.dp))
+        // 7-day Horizontal Week Strip
+        WeekStrip(
+            selectedDate = selectedDate,
+            onDateSelected = { selectedDate = it }
+        )
 
-            // Habit List
-            if (scheduledHabits.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 60.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("No habits scheduled", fontSize = 18.sp, color = SecondaryText)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("Tap + to create a habit", fontSize = 14.sp, color = MutedText)
+        HairlineDivider(modifier = Modifier.padding(top = 4.dp))
+
+        // Habit List
+        if (scheduledHabits.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 60.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(CircleShape)
+                            .background(CobaltBlue.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = CobaltBlue,
+                            modifier = Modifier.size(26.dp)
+                        )
                     }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text("No habits scheduled", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = SecondaryText)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Tap + to create or unfilter habits", fontSize = 13.sp, color = MutedText)
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(scheduledHabits, key = { it.id }) { habit ->
-                        val log = dailyLogs.find { it.habitId == habit.id }
-                        val isDone = log?.isCompleted == true
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(scheduledHabits, key = { it.id }) { habit ->
+                    val log = dailyLogs.find { it.habitId == habit.id }
+                    val isDone = log?.isCompleted == true
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(CardSurface)
-                                .border(1.dp, Hairline, RoundedCornerShape(8.dp))
-                                .clickable {
-                                    scope.launch {
-                                        val newLog = HabitLog(
-                                            id = log?.id ?: java.util.UUID.randomUUID().toString(),
-                                            habitId = habit.id,
-                                            dateString = selectedDateString,
-                                            isCompleted = !isDone,
-                                            isSlip = false
-                                        )
-                                        habitDao.insertOrUpdateLog(newLog)
-                                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(if (isDone) CobaltBlue.copy(alpha = 0.08f) else CardSurface)
+                            .border(
+                                1.dp,
+                                if (isDone) CobaltBlue else Hairline,
+                                RoundedCornerShape(14.dp)
+                            )
+                            .clickable {
+                                scope.launch {
+                                    val newLog = HabitLog(
+                                        id = log?.id ?: java.util.UUID.randomUUID().toString(),
+                                        habitId = habit.id,
+                                        dateString = selectedDateString,
+                                        isCompleted = !isDone,
+                                        isSlip = false
+                                    )
+                                    habitDao.insertOrUpdateLog(newLog)
                                 }
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            }
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Left: Icon Badge
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isDone) CobaltBlue.copy(alpha = 0.12f) else PageGround)
+                                .border(
+                                    1.dp,
+                                    if (isDone) CobaltBlue.copy(alpha = 0.3f) else Hairline,
+                                    RoundedCornerShape(10.dp)
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = if (isDone) CobaltBlue else SecondaryText,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        // Center: Title + Pill
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 12.dp)
+                        ) {
+                            Text(
+                                text = habit.title,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = PrimaryText,
+                                maxLines = 1
+                            )
+                            Spacer(modifier = Modifier.height(3.dp))
+                            if (habit.habitType == HabitType.QUIT) {
+                                InverseBadge("QUIT")
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isDone) CobaltBlue.copy(alpha = 0.1f) else PageGround)
+                                        .border(1.dp, if (isDone) CobaltBlue.copy(alpha = 0.3f) else Hairline, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (isDone) "1/1" else "0/1",
+                                        fontSize = 11.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = if (isDone) CobaltBlue else MutedText
+                                    )
+                                }
+                            }
+                        }
+
+                        // Right: Streak + Completion Circle
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "1d",
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = if (isDone) CobaltBlue else MutedText
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
                             CompletionCircle(
                                 isCompleted = isDone,
                                 isQuit = habit.habitType == HabitType.QUIT,
@@ -187,55 +336,10 @@ fun TodayScreen(habitDao: HabitDao) {
                                     }
                                 }
                             )
-
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = 12.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = habit.title,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = PrimaryText
-                                    )
-                                    if (habit.habitType == HabitType.QUIT) {
-                                        Spacer(modifier = Modifier.size(6.dp))
-                                        InverseBadge("QUIT")
-                                    }
-                                }
-                            }
-
-                            // Streak
-                            Text(
-                                text = "1d",
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily.Monospace,
-                                color = MutedText
-                            )
                         }
                     }
                 }
             }
-        }
-
-        if (showAddDialog) {
-            AddHabitDialog(
-                onDismiss = { showAddDialog = false },
-                onSave = { title, type, days ->
-                    scope.launch {
-                        habitDao.insertHabit(
-                            Habit(
-                                title = title,
-                                type = type.value,
-                                scheduleDays = days.joinToString(",")
-                            )
-                        )
-                    }
-                    showAddDialog = false
-                }
-            )
         }
     }
 }
