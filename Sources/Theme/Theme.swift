@@ -25,6 +25,19 @@ extension Color {
     static let hairline = Color(red: 0xDC / 255.0, green: 0xDB / 255.0, blue: 0xD5 / 255.0)
 }
 
+extension ShapeStyle where Self == Color {
+    static var pageGround: Color { Color.pageGround }
+    static var cardSurface: Color { Color.cardSurface }
+    static var primaryText: Color { Color.primaryText }
+    static var secondaryText: Color { Color.secondaryText }
+    static var mutedText: Color { Color.mutedText }
+    static var inverseSurface: Color { Color.inverseSurface }
+    static var inverseText: Color { Color.inverseText }
+    static var cobaltBlue: Color { Color.cobaltBlue }
+    static var cobaltLabel: Color { Color.cobaltLabel }
+    static var hairline: Color { Color.hairline }
+}
+
 // MARK: - Typography: Host Grotesk
 
 /// Returns a Host Grotesk font at the given weight and size, falling back to

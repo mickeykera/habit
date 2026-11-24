@@ -38,7 +38,7 @@ struct TodayView: View {
                     HStack {
                         Text(dateHeaderString)
                             .font(.hostGrotesk(.medium, size: 32))
-                            .foregroundStyle(.primaryText)
+                            .foregroundStyle(Color.primaryText)
                             .tracking(-0.5)
 
                         Spacer()
@@ -46,7 +46,7 @@ struct TodayView: View {
                         Text("\(completedCount) / \(scheduledHabits.count)")
                             .font(.hostGrotesk(.semibold, size: 20))
                             .monospacedDigit()
-                            .foregroundStyle(.cobaltBlue)
+                            .foregroundStyle(Color.cobaltBlue)
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
@@ -64,15 +64,15 @@ struct TodayView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "plus.circle.dashed")
                             .font(.system(size: 48))
-                            .foregroundStyle(.mutedText)
+                            .foregroundStyle(Color.mutedText)
 
                         Text("No habits yet")
                             .font(.hostGrotesk(.medium, size: 20))
-                            .foregroundStyle(.secondaryText)
+                            .foregroundStyle(Color.secondaryText)
 
                         Text("Tap + to add your first habit")
                             .font(.hostGrotesk(.regular, size: 16))
-                            .foregroundStyle(.mutedText)
+                            .foregroundStyle(Color.mutedText)
                     }
                     Spacer()
                 } else {
@@ -155,5 +155,5 @@ struct TodayView: View {
 
 #Preview {
     TodayView()
-        .modelContainer(for: Habit.self, HabitLog.self, inMemory: true)
+        .modelContainer(for: [Habit.self, HabitLog.self], inMemory: true)
 }

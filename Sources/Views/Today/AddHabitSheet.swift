@@ -37,7 +37,7 @@ struct AddHabitSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Habit Name")
                             .font(.hostGrotesk(.medium, size: 13))
-                            .foregroundStyle(.mutedText)
+                            .foregroundStyle(Color.mutedText)
 
                         TextField("e.g., Read 20 minutes", text: $title)
                             .font(.hostGrotesk(.regular, size: 16))
@@ -51,7 +51,7 @@ struct AddHabitSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Type")
                             .font(.hostGrotesk(.medium, size: 13))
-                            .foregroundStyle(.mutedText)
+                            .foregroundStyle(Color.mutedText)
 
                         Picker("Type", selection: $habitType) {
                             Text("Build").tag(HabitType.build)
@@ -66,7 +66,7 @@ struct AddHabitSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Schedule")
                             .font(.hostGrotesk(.medium, size: 13))
-                            .foregroundStyle(.mutedText)
+                            .foregroundStyle(Color.mutedText)
 
                         Toggle("Every day", isOn: $isDaily)
                             .font(.hostGrotesk(.regular, size: 16))
@@ -151,7 +151,7 @@ struct AddHabitSheet: View {
                             } label: {
                                 Text("Archive Habit")
                                     .font(.hostGrotesk(.medium, size: 16))
-                                    .foregroundStyle(.secondaryText)
+                                    .foregroundStyle(Color.secondaryText)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 14)
                                     .insetCard()
@@ -181,7 +181,7 @@ struct AddHabitSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundStyle(.cobaltBlue)
+                    .foregroundStyle(Color.cobaltBlue)
                 }
             }
             .alert("Delete Habit", isPresented: $showDeleteConfirmation) {

@@ -52,6 +52,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: Habit.self, HabitLog.self, inMemory: true)
+        .modelContainer(for: [Habit.self, HabitLog.self], inMemory: true)
         .environment(SupabaseSyncService())
 }

@@ -413,5 +413,5 @@ struct CalendarView: View {
     NavigationStack {
         CalendarView()
     }
-    .modelContainer(for: Habit.self, HabitLog.self, inMemory: true)
+    .modelContainer(for: [Habit.self, HabitLog.self], inMemory: true)
 }

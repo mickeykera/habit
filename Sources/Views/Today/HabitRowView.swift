@@ -36,7 +36,7 @@ struct HabitRowView: View {
                 HStack(spacing: 6) {
                     Text(habit.title)
                         .font(.hostGrotesk(.regular, size: 16))
-                        .foregroundStyle(.primaryText)
+                        .foregroundStyle(Color.primaryText)
                         .lineLimit(1)
 
                     if habit.type == .quit {
@@ -51,7 +51,7 @@ struct HabitRowView: View {
                     Text("\(streakCount)d")
                         .font(.hostGrotesk(.medium, size: 14))
                         .monospacedDigit()
-                        .foregroundStyle(.mutedText)
+                        .foregroundStyle(Color.mutedText)
                 }
             }
             .padding(.horizontal, 16)

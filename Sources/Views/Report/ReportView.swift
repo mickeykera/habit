@@ -273,5 +273,5 @@ struct ReportView: View {
     NavigationStack {
         ReportView()
     }
-    .modelContainer(for: Habit.self, HabitLog.self, inMemory: true)
+    .modelContainer(for: [Habit.self, HabitLog.self], inMemory: true)
 }

@@ -10,6 +10,6 @@ struct HabitTrackerApp: App {
             ContentView()
                 .environment(syncService)
         }
-        .modelContainer(for: Habit.self, HabitLog.self)
+        .modelContainer(for: [Habit.self, HabitLog.self])
     }
 }
