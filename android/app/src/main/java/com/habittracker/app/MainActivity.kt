@@ -165,7 +165,7 @@ fun MainScreen(habitDao: com.habittracker.app.data.HabitDao, syncService: Supaba
                 label = "tabCrossfade"
             ) { targetIndex ->
                 when (targetIndex) {
-                    0 -> TodayScreen(habitDao, onOpenAdd = { showAddHabitDialog = true })
+                    0 -> TodayScreen(habitDao, syncService = syncService, onOpenAdd = { showAddHabitDialog = true })
                     1 -> CalendarScreen(habitDao, onOpenAdd = { showAddHabitDialog = true })
                     2 -> FriendsScreen(syncService)
                     3 -> ReportScreen(habitDao)

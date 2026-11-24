@@ -390,22 +390,19 @@ fun SettingsScreen(habitDao: HabitDao, syncService: SupabaseSyncService) {
                         label = { Text("Anon Key") },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                isSyncing = true
-                                val res = syncService.syncDailyStats(5, 5, 1.0, 5)
-                                isSyncing = false
-                                Toast.makeText(context, if (res.isSuccess) "Sync succeeded" else "Sync failed", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = CobaltBlue),
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isSyncing
-                    ) {
-                        Text(if (isSyncing) "Syncing…" else "Sync Now", color = CobaltLabel)
-                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (syncService.isConfigured) "● Automatic Cloud Sync: Active" else "○ Cloud Not Configured",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (syncService.isConfigured) CobaltBlue else MutedText
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "All habit completions save automatically to Supabase.",
+                        fontSize = 11.sp,
+                        color = MutedText
+                    )
                 }
             },
             confirmButton = {

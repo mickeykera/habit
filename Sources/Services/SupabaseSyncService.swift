@@ -78,11 +78,13 @@ final class SupabaseSyncService: @unchecked Sendable {
     var friends: [FriendStats] = []
 
     var supabaseURL: String {
-        UserDefaults.standard.string(forKey: "supabase_url") ?? ""
+        let saved = UserDefaults.standard.string(forKey: "supabase_url") ?? ""
+        return saved.isEmpty ? AppConfig.defaultSupabaseURL : saved
     }
 
     var supabaseAnonKey: String {
-        UserDefaults.standard.string(forKey: "supabase_anon_key") ?? ""
+        let saved = UserDefaults.standard.string(forKey: "supabase_anon_key") ?? ""
+        return saved.isEmpty ? AppConfig.defaultSupabaseAnonKey : saved
     }
 
     // MARK: Private
@@ -92,8 +94,6 @@ final class SupabaseSyncService: @unchecked Sendable {
     // MARK: Init
 
     init() {
-        let url = UserDefaults.standard.string(forKey: "supabase_url")
-        let key = UserDefaults.standard.string(forKey: "supabase_anon_key")
         let savedName = UserDefaults.standard.string(forKey: "displayName")
         let savedCode = UserDefaults.standard.string(forKey: "friendCode")
 
@@ -104,9 +104,17 @@ final class SupabaseSyncService: @unchecked Sendable {
             self.friendCode = savedCode
         }
 
-        if let url, let key, let supabaseURL = URL(string: url), !url.isEmpty, !key.isEmpty {
-            self.client = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: key)
+        let effectiveURL = self.supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let effectiveKey = self.supabaseAnonKey.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let url = URL(string: effectiveURL), !effectiveURL.isEmpty, !effectiveKey.isEmpty {
+            self.client = SupabaseClient(supabaseURL: url, supabaseKey: effectiveKey)
             self.isConfigured = true
+
+            // Automatically ensure user session on start
+            Task { [weak self] in
+                try? await self?.ensureUser()
+            }
         }
     }
 

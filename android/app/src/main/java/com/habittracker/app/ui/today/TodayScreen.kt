@@ -69,6 +69,7 @@ enum class TodayFilter(val label: String) {
 @Composable
 fun TodayScreen(
     habitDao: HabitDao,
+    syncService: com.habittracker.app.service.SupabaseSyncService? = null,
     onOpenAdd: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
@@ -333,6 +334,20 @@ fun TodayScreen(
                                             isSlip = false
                                         )
                                         habitDao.insertOrUpdateLog(newLog)
+
+                                        // Auto-save to Supabase in background
+                                        syncService?.let { service ->
+                                            if (service.isConfigured) {
+                                                val newlyDone = if (!isDone) completedCount + 1 else maxOf(0, completedCount - 1)
+                                                val sched = maxOf(1, scheduledHabits.size)
+                                                service.syncDailyStats(
+                                                    completedCount = newlyDone,
+                                                    scheduledCount = sched,
+                                                    completionRate = newlyDone.toDouble() / sched,
+                                                    activeStreak = 1
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             )

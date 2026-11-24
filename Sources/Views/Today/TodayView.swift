@@ -11,6 +11,7 @@ enum TodayFilter: String, CaseIterable, Identifiable {
 
 struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(SupabaseSyncService.self) private var syncService
     @Query(filter: #Predicate<Habit> { !$0.isArchived },
            sort: \Habit.sortOrder)
     private var habits: [Habit]
@@ -178,6 +179,9 @@ struct TodayView: View {
             }
         }
         .background(Color.pageGround)
+        .task {
+            autoSyncDailyStats()
+        }
         .sheet(isPresented: $showAddSheet) {
             AddHabitSheet()
         }
@@ -200,6 +204,7 @@ struct TodayView: View {
                 context: modelContext
             )
         }
+        autoSyncDailyStats()
     }
 
     private func markSlip(for habit: Habit) {
@@ -209,6 +214,23 @@ struct TodayView: View {
                 on: selectedDate,
                 asSlip: true,
                 context: modelContext
+            )
+        }
+        autoSyncDailyStats()
+    }
+
+    private func autoSyncDailyStats() {
+        guard syncService.isConfigured else { return }
+        let scheduled = scheduledHabits.count
+        let completed = completedCount
+        let rate = scheduled > 0 ? Double(completed) / Double(scheduled) : 0.0
+        let streak = habits.map { StreakCalculator.currentStreak(for: $0) }.max() ?? 0
+        Task {
+            try? await syncService.syncDailyStats(
+                completedCount: completed,
+                scheduledCount: scheduled,
+                completionRate: rate,
+                activeStreak: streak
             )
         }
     }

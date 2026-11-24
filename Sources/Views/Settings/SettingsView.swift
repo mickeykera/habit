@@ -488,7 +488,15 @@ struct SettingsView: View {
     private var supabaseSheet: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Supabase Credentials"), footer: Text("Connect to your free Supabase instance with anonymous PostgreSQL RLS.")) {
+                Section(header: Text("Cloud Database (Supabase)"), footer: Text("When configured, your habit changes and daily completion stats save automatically to your Supabase cloud database.")) {
+                    HStack {
+                        Image(systemName: syncService.isConfigured ? "checkmark.circle.fill" : "icloud.slash")
+                            .foregroundStyle(syncService.isConfigured ? Color.cobaltBlue : Color.mutedText)
+                        Text(syncService.isConfigured ? "Automatic Cloud Sync Active" : "Cloud Not Configured")
+                            .font(.hostGrotesk(.medium, size: 14))
+                            .foregroundStyle(Color.primaryText)
+                    }
+
                     TextField("Supabase URL", text: $supabaseURL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -504,22 +512,8 @@ struct SettingsView: View {
                     }
                     .disabled(supabaseURL.isEmpty || supabaseAnonKey.isEmpty)
                 }
-
-                Section("Sync Now") {
-                    Button {
-                        Task { await performSync() }
-                    } label: {
-                        HStack {
-                            if isSyncing {
-                                ProgressView().padding(.trailing, 4)
-                            }
-                            Text(isSyncing ? "Syncing…" : "Sync Daily Aggregate Now")
-                        }
-                    }
-                    .disabled(isSyncing || !syncService.isConfigured)
-                }
             }
-            .navigationTitle("Friends Sync")
+            .navigationTitle("Cloud Database")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

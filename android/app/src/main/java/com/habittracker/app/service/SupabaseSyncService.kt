@@ -2,6 +2,7 @@ package com.habittracker.app.service
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.habittracker.app.config.AppConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -26,11 +27,17 @@ class SupabaseSyncService(context: Context) {
         context.getSharedPreferences("habit_tracker_prefs", Context.MODE_PRIVATE)
 
     var supabaseUrl: String
-        get() = prefs.getString("supabase_url", "") ?: ""
+        get() {
+            val saved = prefs.getString("supabase_url", "") ?: ""
+            return if (saved.isNotBlank()) saved else AppConfig.DEFAULT_SUPABASE_URL
+        }
         set(value) = prefs.edit().putString("supabase_url", value).apply()
 
     var supabaseAnonKey: String
-        get() = prefs.getString("supabase_anon_key", "") ?: ""
+        get() {
+            val saved = prefs.getString("supabase_anon_key", "") ?: ""
+            return if (saved.isNotBlank()) saved else AppConfig.DEFAULT_SUPABASE_ANON_KEY
+        }
         set(value) = prefs.edit().putString("supabase_anon_key", value).apply()
 
     var displayName: String
