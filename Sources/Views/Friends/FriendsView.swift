@@ -218,23 +218,7 @@ struct FriendsView: View {
     private var timeframePicker: some View {
         HStack(spacing: 0) {
             ForEach(Timeframe.allCases, id: \.self) { tf in
-                let isSelected = timeframe == tf
-                Button {
-                    withAnimation(.snappySpring) {
-                        timeframe = tf
-                    }
-                } label: {
-                    Text(tf.label)
-                        .font(.hostGrotesk(.medium, size: 13))
-                        .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(
-                            isSelected ? Color.cobaltBlue : Color.clear
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
-                }
-                .buttonStyle(.plain)
+                timeframeButton(for: tf)
             }
         }
         .padding(3)
@@ -244,6 +228,24 @@ struct FriendsView: View {
             RoundedRectangle(cornerRadius: 9)
                 .stroke(Color.hairline, lineWidth: 1)
         )
+    }
+
+    private func timeframeButton(for tf: Timeframe) -> some View {
+        let isSelected = timeframe == tf
+        return Button {
+            withAnimation(.snappySpring) {
+                timeframe = tf
+            }
+        } label: {
+            Text(tf.displayName)
+                .font(.hostGrotesk(.medium, size: 13))
+                .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(isSelected ? Color.cobaltBlue : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Leaderboard Section
@@ -422,7 +424,7 @@ struct FriendsView: View {
     private func refreshFriends() async {
         guard syncService.isConfigured else { return }
         do {
-            try await syncService.fetchFriendsStats(timeframe: timeframe)
+            _ = try await syncService.fetchFriends(timeframe: timeframe)
         } catch {
             errorMessage = error.localizedDescription
             showError = true

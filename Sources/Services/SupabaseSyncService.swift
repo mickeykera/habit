@@ -16,6 +16,8 @@ enum Timeframe: String, Codable, CaseIterable, Sendable {
         case .thisMonth: "This Month"
         }
     }
+
+    var label: String { displayName }
 }
 
 // MARK: - FriendStats
@@ -74,6 +76,14 @@ final class SupabaseSyncService: @unchecked Sendable {
     var displayName: String = "Habit Tracker"
     var friendCode: String = ""
     var friends: [FriendStats] = []
+
+    var supabaseURL: String {
+        UserDefaults.standard.string(forKey: "supabase_url") ?? ""
+    }
+
+    var supabaseAnonKey: String {
+        UserDefaults.standard.string(forKey: "supabase_anon_key") ?? ""
+    }
 
     // MARK: Private
 
