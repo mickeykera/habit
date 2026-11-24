@@ -193,7 +193,7 @@ final class SupabaseSyncService: @unchecked Sendable {
 
         await MainActor.run {
             self.currentUserEmail = session.user.email ?? trimmedEmail
-            if let metaName = session.user.userMetadata["display_name"]?.stringValue, !metaName.isEmpty {
+            if case let .string(metaName) = session.user.userMetadata["display_name"], !metaName.isEmpty {
                 self.displayName = metaName
                 UserDefaults.standard.set(metaName, forKey: "displayName")
             }
@@ -206,11 +206,11 @@ final class SupabaseSyncService: @unchecked Sendable {
     }
 
     /// Retrieve OAuth authorization URL for the given provider.
-    func getOAuthURL(provider: Provider, redirectTo: URL? = nil) throws -> URL {
+    func getOAuthURL(provider: Provider, redirectTo: URL? = nil) async throws -> URL {
         guard let client else {
             throw NSError(domain: "Supabase", code: 400, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized."])
         }
-        return try client.auth.getOAuthSignInURL(provider: provider, redirectTo: redirectTo)
+        return try await client.auth.getOAuthSignInURL(provider: provider, redirectTo: redirectTo)
     }
 
     /// Sign out and clear active session.

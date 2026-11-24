@@ -276,11 +276,17 @@ struct AuthView: View {
     }
 
     private func handleOAuth(provider: Provider) {
-        do {
-            let authURL = try syncService.getOAuthURL(provider: provider)
-            openURL(authURL)
-        } catch {
-            self.errorMessage = error.localizedDescription
+        Task {
+            do {
+                let authURL = try await syncService.getOAuthURL(provider: provider)
+                await MainActor.run {
+                    openURL(authURL)
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
         }
     }
 }

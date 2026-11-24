@@ -224,7 +224,7 @@ struct TodayView: View {
         let scheduled = scheduledHabits.count
         let completed = completedCount
         let rate = scheduled > 0 ? Double(completed) / Double(scheduled) : 0.0
-        let streak = habits.map { StreakCalculator.currentStreak(for: $0) }.max() ?? 0
+        let streak = habits.map { StreakCalculator.currentStreak(for: $0, asOf: selectedDate, logs: $0.logs) }.max() ?? 0
         Task {
             try? await syncService.syncDailyStats(
                 completedCount: completed,
