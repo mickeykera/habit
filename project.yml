@@ -21,9 +21,10 @@ targets:
     platform: iOS
     deploymentTarget: "18.0"
     sources:
-      - path: Sources
-      - path: Resources
-        optional: true
+      - Sources
+      - Resources
+    info:
+      path: Sources/Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.habittracker.app
@@ -33,25 +34,8 @@ targets:
         CODE_SIGNING_ALLOWED: NO
         CODE_SIGNING_REQUIRED: NO
         CODE_SIGN_IDENTITY: ""
-    info:
-      properties:
-        UIAppFonts:
-          - HostGrotesk-Regular.ttf
-          - HostGrotesk-Medium.ttf
-          - HostGrotesk-SemiBold.ttf
-          - HostGrotesk-Bold.ttf
     dependencies:
       - package: supabase-swift
         product: Supabase
     entitlements:
       properties: {}
-
-schemes:
-  HabitTracker:
-    build:
-      targets:
-        HabitTracker: all
-    run:
-      config: Debug
-    archive:
-      config: Release
