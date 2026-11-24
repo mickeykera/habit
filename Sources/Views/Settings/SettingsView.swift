@@ -30,6 +30,7 @@ struct SettingsView: View {
     @State private var showPreferencesSheet = false
     @State private var showSupabaseSheet = false
     @State private var showDataBackupSheet = false
+    @State private var showAuthSheet = false
 
     @Query private var habits: [Habit]
     @Query private var habitLogs: [HabitLog]
@@ -72,8 +73,12 @@ struct SettingsView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
-                    // Profile Header
-                    profileHeaderCard
+                    // Account (if signed in) or Sign Up (if not signed in) above all settings
+                    if syncService.isAuthenticated {
+                        accountCard
+                    } else {
+                        signUpCard
+                    }
 
                     // Daily Mood Strip Card
                     dailyMoodStripCard
@@ -94,6 +99,9 @@ struct SettingsView: View {
             displayName = syncService.displayName
             supabaseURL = syncService.supabaseURL
             supabaseAnonKey = syncService.supabaseAnonKey
+        }
+        .sheet(isPresented: $showAuthSheet) {
+            AuthView()
         }
         .sheet(isPresented: $showHabitManager) {
             habitManagerSheet
@@ -129,97 +137,192 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - 1. Profile Header Card
-    private var profileHeaderCard: some View {
-        HStack(spacing: 14) {
-            // Circular Avatar Initials with Specular Metallic Bezel
-            ZStack {
-                Circle()
-                    .fill(LinearGradient.cobaltEnamel)
-                    .frame(width: 52, height: 52)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.8), Color.black.opacity(0.35)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ),
-                                lineWidth: 1.5
-                            )
-                    )
-                    .shadow(color: Color.cobaltBlue.opacity(0.35), radius: 3, x: 0, y: 1.5)
-
-                Text(initials(from: syncService.displayName))
-                    .font(.hostGrotesk(.bold, size: 18))
-                    .foregroundStyle(Color.cobaltLabel)
-                    .letterpress(isLight: true)
-            }
-
-            VStack(alignment: .leading, spacing: 3) {
-                if isEditingName {
-                    HStack {
-                        TextField("Display Name", text: $displayName)
-                            .font(.hostGrotesk(.semibold, size: 16))
-                            .textFieldStyle(.plain)
-
-                        Button("Done") {
-                            syncService.displayName = displayName
-                            isEditingName = false
-                        }
-                        .font(.hostGrotesk(.medium, size: 13))
-                        .foregroundStyle(Color.cobaltBlue)
-                    }
-                } else {
-                    HStack(spacing: 6) {
-                        Text(syncService.displayName)
-                            .font(.hostGrotesk(.semibold, size: 16))
-                            .foregroundStyle(Color.primaryText)
-                            .letterpress(isLight: false)
-
-                        Button {
-                            isEditingName = true
-                        } label: {
-                            Image(systemName: "pencil")
-                                .font(.system(size: 11))
-                                .foregroundStyle(Color.mutedText)
-                        }
-                    }
-                }
-
-                Text("Friend Code: \(syncService.friendCode)")
-                    .font(.hostGrotesk(.regular, size: 12))
-                    .monospacedDigit()
-                    .foregroundStyle(Color.mutedText)
+    // MARK: - 1. Account Card (When Signed In)
+    private var accountCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Account")
+                    .font(.hostGrotesk(.bold, size: 14))
+                    .foregroundStyle(Color.cobaltBlue)
                     .letterpress(isLight: false)
 
-                if let email = syncService.currentUserEmail {
-                    Text(email)
-                        .font(.hostGrotesk(.regular, size: 11))
+                Spacer()
+
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(Color(hex: "10B981"))
+                        .frame(width: 7, height: 7)
+                    Text("Synced")
+                        .font(.hostGrotesk(.medium, size: 11))
                         .foregroundStyle(Color.mutedText)
                         .letterpress(isLight: false)
                 }
             }
 
-            Spacer()
+            HStack(spacing: 14) {
+                // Circular Avatar Initials with Specular Metallic Bezel
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient.cobaltEnamel)
+                        .frame(width: 52, height: 52)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.8), Color.black.opacity(0.35)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ),
+                                    lineWidth: 1.5
+                                )
+                        )
+                        .shadow(color: Color.cobaltBlue.opacity(0.35), radius: 3, x: 0, y: 1.5)
 
-            // Copy Friend Code Button
-            Button {
-                UIPasteboard.general.string = syncService.friendCode
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "doc.on.doc")
-                    Text("Copy")
+                    Text(initials(from: syncService.displayName))
+                        .font(.hostGrotesk(.bold, size: 18))
+                        .foregroundStyle(Color.cobaltLabel)
+                        .letterpress(isLight: true)
                 }
-                .font(.hostGrotesk(.medium, size: 12))
-                .foregroundStyle(Color.cobaltBlue)
-                .letterpress(isLight: false)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(Capsule().fill(LinearGradient.cardGradient))
-                .clipShape(Capsule())
-                .overlay(Capsule().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
-                .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    if isEditingName {
+                        HStack {
+                            TextField("Display Name", text: $displayName)
+                                .font(.hostGrotesk(.semibold, size: 16))
+                                .textFieldStyle(.plain)
+
+                            Button("Done") {
+                                syncService.displayName = displayName
+                                isEditingName = false
+                            }
+                            .font(.hostGrotesk(.medium, size: 13))
+                            .foregroundStyle(Color.cobaltBlue)
+                        }
+                    } else {
+                        HStack(spacing: 6) {
+                            Text(syncService.displayName)
+                                .font(.hostGrotesk(.semibold, size: 16))
+                                .foregroundStyle(Color.primaryText)
+                                .letterpress(isLight: false)
+
+                            Button {
+                                isEditingName = true
+                            } label: {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Color.mutedText)
+                            }
+                        }
+                    }
+
+                    if let email = syncService.currentUserEmail, !email.isEmpty {
+                        Text(email)
+                            .font(.hostGrotesk(.regular, size: 12))
+                            .foregroundStyle(Color.mutedText)
+                            .letterpress(isLight: false)
+                    }
+
+                    Text("Friend Code: \(syncService.friendCode)")
+                        .font(.hostGrotesk(.regular, size: 11))
+                        .monospacedDigit()
+                        .foregroundStyle(Color.mutedText)
+                        .letterpress(isLight: false)
+                }
+
+                Spacer()
+
+                // Copy Friend Code Button
+                Button {
+                    UIPasteboard.general.string = syncService.friendCode
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "doc.on.doc")
+                        Text("Copy")
+                    }
+                    .font(.hostGrotesk(.medium, size: 12))
+                    .foregroundStyle(Color.cobaltBlue)
+                    .letterpress(isLight: false)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(LinearGradient.cardGradient))
+                    .clipShape(Capsule())
+                    .overlay(Capsule().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                    .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
+                }
+                .buttonStyle(SkeuomorphicButtonStyle())
+            }
+        }
+        .padding(14)
+        .skeuomorphicCard(cornerRadius: 16)
+    }
+
+    // MARK: - 1b. Sign Up Card (When Not Signed In)
+    private var signUpCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Sign Up")
+                    .font(.hostGrotesk(.bold, size: 14))
+                    .foregroundStyle(Color.cobaltBlue)
+                    .letterpress(isLight: false)
+
+                Spacer()
+
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(Color.mutedText.opacity(0.5))
+                        .frame(width: 7, height: 7)
+                    Text("Local Only")
+                        .font(.hostGrotesk(.medium, size: 11))
+                        .foregroundStyle(Color.mutedText)
+                        .letterpress(isLight: false)
+                }
+            }
+
+            HStack(spacing: 14) {
+                // Circular Medallion with Recessed Well
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient.wellGradient)
+                        .frame(width: 50, height: 50)
+                        .overlay(Circle().strokeBorder(LinearGradient.reverseBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.06), radius: 1, x: 0, y: 1)
+
+                    Image(systemName: "icloud.and.arrow.up.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(Color.cobaltBlue)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Save Habits Permanently")
+                        .font(.hostGrotesk(.semibold, size: 15))
+                        .foregroundStyle(Color.primaryText)
+                        .letterpress(isLight: false)
+
+                    Text("Store habits permanently in the cloud and sync across all your devices.")
+                        .font(.hostGrotesk(.regular, size: 12))
+                        .foregroundStyle(Color.mutedText)
+                        .letterpress(isLight: false)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+            }
+
+            // Tactile Cobalt Enamel Button
+            Button {
+                showAuthSheet = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.badge.plus")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Sign Up / Sign In")
+                        .font(.hostGrotesk(.semibold, size: 14))
+                        .letterpress(isLight: true)
+                }
+                .foregroundStyle(Color.cobaltLabel)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .skeuomorphicCobaltButton(cornerRadius: 12)
             }
             .buttonStyle(SkeuomorphicButtonStyle())
         }
@@ -319,11 +422,13 @@ struct SettingsView: View {
                 showDataBackupSheet = true
             }
 
-            EngravedDivider().padding(.horizontal, 14)
+            if syncService.isAuthenticated {
+                EngravedDivider().padding(.horizontal, 14)
 
-            chevronRow(title: "Sign Out", subtitle: syncService.currentUserEmail ?? "Account", icon: "rectangle.portrait.and.arrow.right") {
-                Task {
-                    await syncService.signOut()
+                chevronRow(title: "Sign Out", subtitle: syncService.currentUserEmail ?? "Account", icon: "rectangle.portrait.and.arrow.right") {
+                    Task {
+                        await syncService.signOut()
+                    }
                 }
             }
         }

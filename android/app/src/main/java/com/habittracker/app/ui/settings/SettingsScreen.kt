@@ -21,9 +21,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Sync
@@ -56,8 +58,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.habittracker.app.data.HabitDao
 import com.habittracker.app.service.SupabaseSyncService
+import com.habittracker.app.ui.auth.AuthScreen
 import com.habittracker.app.theme.CardBrush
 import com.habittracker.app.theme.CardSurface
 import com.habittracker.app.theme.CobaltBlue
@@ -85,6 +90,8 @@ fun SettingsScreen(
     val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
 
+    var showAuthDialog by remember { mutableStateOf(false) }
+    var isAuthenticated by remember { mutableStateOf(syncService.isAuthenticated) }
     var showSupabaseDialog by remember { mutableStateOf(false) }
     var showPreferencesDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
@@ -125,89 +132,232 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
-            // Profile Header Card
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(3.dp, RoundedCornerShape(14.dp))
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(CardBrush)
-                    .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
+            // Account (if signed in) or Sign Up (if not signed in) above all settings
+            if (isAuthenticated) {
+                // Account Card (When Signed In)
+                Column(
                     modifier = Modifier
-                        .size(50.dp)
-                        .shadow(2.dp, CircleShape)
-                        .clip(CircleShape)
-                        .background(CobaltEnamelBrush)
-                        .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = syncService.displayName.take(2).uppercase(),
-                        color = CobaltLabel,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 17.sp
-                    )
-                }
-
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = syncService.displayName,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = PrimaryText
-                        )
-                        Spacer(modifier = Modifier.size(6.dp))
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit Name",
-                            tint = MutedText,
-                            modifier = Modifier
-                                .size(13.dp)
-                                .clickable {
-                                    newDisplayName = syncService.displayName
-                                    showNameDialog = true
-                                }
-                        )
-                    }
-                    Text(
-                        text = "Friend Code: ${syncService.friendCode}",
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = MutedText
-                    )
-                    if (syncService.currentUserEmail.isNotBlank()) {
-                        Text(
-                            text = syncService.currentUserEmail,
-                            fontSize = 11.sp,
-                            color = MutedText
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Box(
-                    modifier = Modifier
-                        .shadow(1.dp, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
+                        .fillMaxWidth()
+                        .shadow(3.dp, RoundedCornerShape(14.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(CardBrush)
-                        .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
-                        .clickable {
-                            clipboardManager.setText(AnnotatedString(syncService.friendCode))
-                            Toast.makeText(context, "Copied friend code", Toast.LENGTH_SHORT).show()
-                        }
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center
+                        .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
+                        .padding(14.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = null, tint = CobaltBlue, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.size(4.dp))
-                        Text("Copy", fontSize = 12.sp, color = CobaltBlue, fontWeight = FontWeight.Medium)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Account",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = CobaltBlue
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF10B981))
+                            )
+                            Spacer(modifier = Modifier.size(5.dp))
+                            Text(
+                                text = "Synced",
+                                fontSize = 11.sp,
+                                color = MutedText
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .shadow(2.dp, CircleShape)
+                                .clip(CircleShape)
+                                .background(CobaltEnamelBrush)
+                                .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = syncService.displayName.take(2).uppercase(),
+                                color = CobaltLabel,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 17.sp
+                            )
+                        }
+
+                        Column(modifier = Modifier.padding(start = 12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = syncService.displayName,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = PrimaryText
+                                )
+                                Spacer(modifier = Modifier.size(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit Name",
+                                    tint = MutedText,
+                                    modifier = Modifier
+                                        .size(13.dp)
+                                        .clickable {
+                                            newDisplayName = syncService.displayName
+                                            showNameDialog = true
+                                        }
+                                )
+                            }
+                            if (syncService.currentUserEmail.isNotBlank()) {
+                                Text(
+                                    text = syncService.currentUserEmail,
+                                    fontSize = 12.sp,
+                                    color = MutedText
+                                )
+                            }
+                            Text(
+                                text = "Friend Code: ${syncService.friendCode}",
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = MutedText
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Box(
+                            modifier = Modifier
+                                .shadow(1.dp, RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(CardBrush)
+                                .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
+                                .clickable {
+                                    clipboardManager.setText(AnnotatedString(syncService.friendCode))
+                                    Toast.makeText(context, "Copied friend code", Toast.LENGTH_SHORT).show()
+                                }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = null, tint = CobaltBlue, modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.size(4.dp))
+                                Text("Copy", fontSize = 12.sp, color = CobaltBlue, fontWeight = FontWeight.Medium)
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Sign Up Card (When Not Signed In)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(3.dp, RoundedCornerShape(14.dp))
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(CardBrush)
+                        .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Sign Up",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = CobaltBlue
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(MutedText.copy(alpha = 0.5f))
+                            )
+                            Spacer(modifier = Modifier.size(5.dp))
+                            Text(
+                                text = "Local Only",
+                                fontSize = 11.sp,
+                                color = MutedText
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .shadow(1.dp, CircleShape)
+                                .clip(CircleShape)
+                                .background(WellBrush)
+                                .border(1.dp, ReverseBevel, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = null,
+                                tint = CobaltBlue,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.size(12.dp))
+
+                        Column {
+                            Text(
+                                text = "Save Habits Permanently",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = PrimaryText
+                            )
+                            Text(
+                                text = "Sign up to store habits in the cloud and sync across devices.",
+                                fontSize = 12.sp,
+                                color = MutedText
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Tactile Cobalt Enamel Button
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(2.dp, RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(CobaltEnamelBrush)
+                            .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                            .clickable { showAuthDialog = true }
+                            .padding(vertical = 11.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.PersonAdd,
+                                contentDescription = null,
+                                tint = CobaltLabel,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.size(6.dp))
+                            Text(
+                                text = "Sign Up / Sign In",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = CobaltLabel
+                            )
+                        }
                     }
                 }
             }
@@ -312,15 +462,18 @@ fun SettingsScreen(
                     showResetDialog = true
                 }
 
-                EngravedDivider(modifier = Modifier.padding(horizontal = 14.dp))
+                if (isAuthenticated) {
+                    EngravedDivider(modifier = Modifier.padding(horizontal = 14.dp))
 
-                SettingsChevronRow(
-                    title = "Sign Out",
-                    subtitle = syncService.currentUserEmail.ifBlank { "Account" },
-                    icon = Icons.AutoMirrored.Filled.ExitToApp
-                ) {
-                    syncService.signOut()
-                    onSignOut()
+                    SettingsChevronRow(
+                        title = "Sign Out",
+                        subtitle = syncService.currentUserEmail.ifBlank { "Account" },
+                        icon = Icons.AutoMirrored.Filled.ExitToApp
+                    ) {
+                        syncService.signOut()
+                        isAuthenticated = false
+                        onSignOut()
+                    }
                 }
             }
 
@@ -494,6 +647,22 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+
+    if (showAuthDialog) {
+        Dialog(
+            onDismissRequest = { showAuthDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            AuthScreen(
+                syncService = syncService,
+                onAuthSuccess = {
+                    showAuthDialog = false
+                    isAuthenticated = true
+                },
+                onDismiss = { showAuthDialog = false }
+            )
+        }
     }
 }
 

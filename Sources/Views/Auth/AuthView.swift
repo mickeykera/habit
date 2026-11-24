@@ -5,6 +5,7 @@ import Supabase
 struct AuthView: View {
     @Environment(SupabaseSyncService.self) private var syncService
     @Environment(\.openURL) private var openURL
+    @Environment(\.dismiss) private var dismiss
 
     @State private var isSignUp: Bool = false
     @State private var email: String = ""
@@ -14,9 +15,26 @@ struct AuthView: View {
     @State private var isLoading: Bool = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Spacer().frame(height: 32)
+        VStack(spacing: 0) {
+            // Dismiss Bar
+            HStack {
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(Color.mutedText.opacity(0.8))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 4)
+
+            ScrollView {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: 12)
 
                 // Header & Brand Logo
                 VStack(spacing: 12) {
@@ -234,7 +252,13 @@ struct AuthView: View {
                 }
                 .padding(.horizontal, 20)
             }
-            .paperBackground()
+        }
+        .paperBackground()
+        .onChange(of: syncService.isAuthenticated) { _, isAuth in
+            if isAuth {
+                dismiss()
+            }
+        }
     }
 
     // MARK: - Actions
@@ -256,6 +280,10 @@ struct AuthView: View {
                         email: email,
                         password: password
                     )
+                }
+                await MainActor.run {
+                    self.isLoading = false
+                    dismiss()
                 }
             } catch {
                 await MainActor.run {

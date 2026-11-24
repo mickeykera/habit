@@ -24,11 +24,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,7 +70,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun AuthScreen(
     syncService: SupabaseSyncService,
-    onAuthSuccess: () -> Unit
+    onAuthSuccess: () -> Unit,
+    onDismiss: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -86,10 +89,25 @@ fun AuthScreen(
             .fillMaxSize()
             .background(PageGround)
             .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 28.dp),
+            .padding(horizontal = 20.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        if (onDismiss != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = MutedText
+                    )
+                }
+            }
+        } else {
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         // Brand Icon & Title
         Box(

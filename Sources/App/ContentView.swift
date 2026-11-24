@@ -34,48 +34,44 @@ struct ContentView: View {
     @State private var showAddHabitSheet = false
 
     var body: some View {
-        if !syncService.isAuthenticated {
-            AuthView()
-        } else {
-            ZStack(alignment: .bottom) {
-                ZStack {
-                    LinearGradient.paperGroundGradient
-                        .ignoresSafeArea()
-                    PaperGrainView()
-                }
-
-                ZStack {
-                    TodayView()
-                        .opacity(selectedTab == .today ? 1 : 0)
-                        .allowsHitTesting(selectedTab == .today)
-
-                    CalendarView()
-                        .opacity(selectedTab == .calendar ? 1 : 0)
-                        .allowsHitTesting(selectedTab == .calendar)
-
-                    FriendsView()
-                        .opacity(selectedTab == .friends ? 1 : 0)
-                        .allowsHitTesting(selectedTab == .friends)
-
-                    ReportView()
-                        .opacity(selectedTab == .report ? 1 : 0)
-                        .allowsHitTesting(selectedTab == .report)
-
-                    SettingsView()
-                        .opacity(selectedTab == .settings ? 1 : 0)
-                        .allowsHitTesting(selectedTab == .settings)
-                }
-                .animation(.easeInOut(duration: 0.22), value: selectedTab)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                // Skeuomorphic Floating Dock
-                floatingNavigationBar
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 12)
+        ZStack(alignment: .bottom) {
+            ZStack {
+                LinearGradient.paperGroundGradient
+                    .ignoresSafeArea()
+                PaperGrainView()
             }
-            .sheet(isPresented: $showAddHabitSheet) {
-                AddHabitSheet()
+
+            ZStack {
+                TodayView()
+                    .opacity(selectedTab == .today ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .today)
+
+                CalendarView()
+                    .opacity(selectedTab == .calendar ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .calendar)
+
+                FriendsView()
+                    .opacity(selectedTab == .friends ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .friends)
+
+                ReportView()
+                    .opacity(selectedTab == .report ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .report)
+
+                SettingsView()
+                    .opacity(selectedTab == .settings ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .settings)
             }
+            .animation(.easeInOut(duration: 0.22), value: selectedTab)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            // Skeuomorphic Floating Dock
+            floatingNavigationBar
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
+        }
+        .sheet(isPresented: $showAddHabitSheet) {
+            AddHabitSheet()
         }
     }
 

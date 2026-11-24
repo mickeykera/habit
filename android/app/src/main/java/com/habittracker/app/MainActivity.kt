@@ -79,20 +79,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             HabitTrackerTheme {
-                var isAuthenticated by remember { mutableStateOf(syncService.isAuthenticated) }
-
-                if (!isAuthenticated) {
-                    AuthScreen(
-                        syncService = syncService,
-                        onAuthSuccess = { isAuthenticated = true }
-                    )
-                } else {
-                    MainScreen(
-                        habitDao = habitDao,
-                        syncService = syncService,
-                        onSignOut = { isAuthenticated = false }
-                    )
-                }
+                MainScreen(
+                    habitDao = habitDao,
+                    syncService = syncService
+                )
             }
         }
     }
