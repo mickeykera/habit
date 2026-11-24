@@ -76,7 +76,7 @@ struct CalendarView: View {
             .padding(.top, 10)
             .padding(.bottom, 96) // Safe area above floating pill bar
         }
-        .background(Color.pageGround)
+        .paperBackground()
         .sheet(isPresented: $showAddHabitSheet) {
             AddHabitSheet()
         }
@@ -137,19 +137,24 @@ struct CalendarView: View {
             } label: {
                 HStack(spacing: 4) {
                     Text(selectedHabitId != nil ? (habits.first(where: { $0.id == selectedHabitId })?.title ?? "Habit") : scopeFilter.rawValue)
-                        .font(.hostGrotesk(.medium, size: 16))
+                        .font(.hostGrotesk(.medium, size: 15))
                         .foregroundStyle(Color.primaryText)
+                        .letterpress(isLight: false)
 
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(Color.mutedText)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color.cardSurface)
+                .background(
+                    Capsule().fill(LinearGradient.cardGradient)
+                )
                 .clipShape(Capsule())
-                .overlay(Capsule().stroke(Color.hairline, lineWidth: 1))
+                .overlay(Capsule().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
             }
+            .buttonStyle(SkeuomorphicButtonStyle())
 
             Spacer()
 
@@ -159,20 +164,21 @@ struct CalendarView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.cardSurface)
+                        .fill(LinearGradient.cardGradient)
                         .frame(width: 36, height: 36)
-                        .overlay(Circle().stroke(Color.hairline, lineWidth: 1))
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
 
                     Image(systemName: "plus")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Color.cobaltBlue)
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SkeuomorphicButtonStyle())
         }
     }
 
-    // MARK: - Habit Filter Strip
+    // MARK: - Habit Filter Strip: Tactile Physical Tokens
     private var habitFilterStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
@@ -187,14 +193,20 @@ struct CalendarView: View {
                         Text("All")
                             .font(.hostGrotesk(.medium, size: 13))
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 13)
                     .padding(.vertical, 7)
                     .foregroundStyle(isAllSelected ? Color.cobaltLabel : Color.primaryText)
-                    .background(isAllSelected ? Color.cobaltBlue : Color.cardSurface)
+                    .letterpress(isLight: isAllSelected)
+                    .background(
+                        Capsule().fill(isAllSelected ? LinearGradient.cobaltEnamel : LinearGradient.cardGradient)
+                    )
                     .clipShape(Capsule())
-                    .overlay(Capsule().stroke(isAllSelected ? Color.clear : Color.hairline, lineWidth: 1))
+                    .overlay(
+                        Capsule().strokeBorder(isAllSelected ? LinearGradient(colors: [Color.white.opacity(0.65), Color.black.opacity(0.25)], startPoint: .top, endPoint: .bottom) : LinearGradient.topLightBevel, lineWidth: 1)
+                    )
+                    .shadow(color: isAllSelected ? Color.cobaltBlue.opacity(0.35) : Color.black.opacity(0.05), radius: isAllSelected ? 4 : 2, x: 0, y: isAllSelected ? 2 : 1)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SkeuomorphicButtonStyle())
 
                 // Each active habit chip
                 ForEach(habits) { habit in
@@ -209,17 +221,23 @@ struct CalendarView: View {
                                 .font(.hostGrotesk(.medium, size: 13))
                                 .lineLimit(1)
                         }
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, 13)
                         .padding(.vertical, 7)
                         .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
-                        .background(isSelected ? Color.cobaltBlue : Color.cardSurface)
+                        .letterpress(isLight: isSelected)
+                        .background(
+                            Capsule().fill(isSelected ? LinearGradient.cobaltEnamel : LinearGradient.cardGradient)
+                        )
                         .clipShape(Capsule())
-                        .overlay(Capsule().stroke(isSelected ? Color.clear : Color.hairline, lineWidth: 1))
+                        .overlay(
+                            Capsule().strokeBorder(isSelected ? LinearGradient(colors: [Color.white.opacity(0.65), Color.black.opacity(0.25)], startPoint: .top, endPoint: .bottom) : LinearGradient.topLightBevel, lineWidth: 1)
+                        )
+                        .shadow(color: isSelected ? Color.cobaltBlue.opacity(0.35) : Color.black.opacity(0.05), radius: isSelected ? 4 : 2, x: 0, y: isSelected ? 2 : 1)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SkeuomorphicButtonStyle())
                 }
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, 3)
         }
     }
 
@@ -232,16 +250,22 @@ struct CalendarView: View {
                     changeMonth(by: -1)
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.primaryText)
                         .frame(width: 32, height: 32)
+                        .background(Circle().fill(LinearGradient.cardGradient))
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
+                .buttonStyle(SkeuomorphicButtonStyle())
 
                 Spacer()
 
                 Text(monthHeaderTitle)
                     .font(.hostGrotesk(.medium, size: 16))
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
 
                 Spacer()
 
@@ -249,10 +273,15 @@ struct CalendarView: View {
                     changeMonth(by: 1)
                 } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.primaryText)
                         .frame(width: 32, height: 32)
+                        .background(Circle().fill(LinearGradient.cardGradient))
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
+                .buttonStyle(SkeuomorphicButtonStyle())
             }
             .padding(.horizontal, 4)
 
@@ -262,11 +291,12 @@ struct CalendarView: View {
                     Text(symbol)
                         .font(.hostGrotesk(.medium, size: 12))
                         .foregroundStyle(Color.mutedText)
+                        .letterpress(isLight: false)
                         .frame(maxWidth: .infinity)
                 }
             }
 
-            HairlineDivider()
+            EngravedDivider()
 
             // 7-column Calendar Grid
             let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
@@ -293,9 +323,7 @@ struct CalendarView: View {
             }
         }
         .padding(14)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 16)
     }
 
     // MARK: - Stats Summary Card
@@ -303,35 +331,50 @@ struct CalendarView: View {
         let stats = computeStats()
 
         return VStack(spacing: 16) {
-            // Centered Circular Progress Ring
-            VStack(spacing: 8) {
+            // Centered Circular Progress Ring (Physical Analog Gauge)
+            VStack(spacing: 10) {
                 ZStack {
-                    // Track
+                    // Recessed circular track groove
                     Circle()
-                        .stroke(Color.hairline, lineWidth: 9)
-                        .frame(width: 110, height: 110)
+                        .stroke(LinearGradient.wellGradient, lineWidth: 12)
+                        .frame(width: 124, height: 124)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(LinearGradient.reverseBevel, lineWidth: 1)
+                                .frame(width: 136, height: 136)
+                        )
 
-                    // Progress
+                    // Enamel liquid gauge arc
                     Circle()
                         .trim(from: 0, to: max(0.001, CGFloat(isShowingOverallRate ? stats.overallRate : stats.monthlyRate)))
                         .stroke(
-                            Color.cobaltBlue,
-                            style: StrokeStyle(lineWidth: 9, lineCap: .round)
+                            LinearGradient.cobaltEnamel,
+                            style: StrokeStyle(lineWidth: 12, lineCap: .round)
                         )
                         .rotationEffect(.degrees(-90))
-                        .frame(width: 110, height: 110)
+                        .frame(width: 124, height: 124)
+                        .shadow(color: Color.cobaltBlue.opacity(0.35), radius: 3, x: 0, y: 1)
                         .animation(.snappySpring, value: isShowingOverallRate)
 
-                    // Percentage Text
+                    // Raised central ceramic face
+                    Circle()
+                        .fill(LinearGradient.cardGradient)
+                        .frame(width: 96, height: 96)
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.08), radius: 3, x: 0, y: 2)
+
+                    // Percentage Text on ceramic face
                     VStack(spacing: 2) {
                         Text("\(Int(round((isShowingOverallRate ? stats.overallRate : stats.monthlyRate) * 100)))%")
-                            .font(.hostGrotesk(.bold, size: 26))
+                            .font(.hostGrotesk(.bold, size: 24))
                             .monospacedDigit()
                             .foregroundStyle(Color.cobaltBlue)
+                            .letterpress(isLight: false)
 
                         Text(isShowingOverallRate ? "Overall Rate" : "Monthly Rate")
-                            .font(.hostGrotesk(.medium, size: 11))
+                            .font(.hostGrotesk(.medium, size: 10))
                             .foregroundStyle(Color.mutedText)
+                            .letterpress(isLight: false)
                     }
                 }
 
@@ -341,24 +384,26 @@ struct CalendarView: View {
                         isShowingOverallRate.toggle()
                     }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Image(systemName: "arrow.left.arrow.right")
                             .font(.system(size: 11, weight: .semibold))
                         Text(isShowingOverallRate ? "Show Monthly" : "Show Overall")
                             .font(.hostGrotesk(.medium, size: 11))
                     }
                     .foregroundStyle(Color.secondaryText)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Color.pageGround)
+                    .letterpress(isLight: false)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(Capsule().fill(LinearGradient.cardGradient))
                     .clipShape(Capsule())
-                    .overlay(Capsule().stroke(Color.hairline, lineWidth: 1))
+                    .overlay(Capsule().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                    .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SkeuomorphicButtonStyle())
             }
             .padding(.top, 4)
 
-            HairlineDivider()
+            EngravedDivider()
 
             // 2×2 KPI Grid
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
@@ -369,20 +414,20 @@ struct CalendarView: View {
             }
         }
         .padding(16)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 16)
     }
 
     private func kpiCell(title: String, value: String, icon: String) -> some View {
         HStack(spacing: 10) {
             ZStack {
                 Circle()
-                    .fill(Color.cobaltBlue.opacity(0.12))
+                    .fill(LinearGradient.wellGradient)
                     .frame(width: 32, height: 32)
+                    .overlay(Circle().strokeBorder(LinearGradient.reverseBevel, lineWidth: 1))
+                    .shadow(color: Color.black.opacity(0.06), radius: 1, x: 0, y: 1)
 
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.cobaltBlue)
             }
 
@@ -390,18 +435,18 @@ struct CalendarView: View {
                 Text(title)
                     .font(.hostGrotesk(.regular, size: 11))
                     .foregroundStyle(Color.mutedText)
+                    .letterpress(isLight: false)
 
                 Text(value)
                     .font(.hostGrotesk(.semibold, size: 14))
                     .monospacedDigit()
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
             }
             Spacer()
         }
         .padding(10)
-        .background(Color.pageGround)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 12)
     }
 
     // MARK: - Done Today Card
@@ -418,15 +463,17 @@ struct CalendarView: View {
                 Text("Done Today")
                     .font(.hostGrotesk(.medium, size: 16))
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
 
                 Spacer()
 
                 Text("\(completedHabitsForSelectedDay.count) completed")
                     .font(.hostGrotesk(.medium, size: 13))
                     .foregroundStyle(Color.mutedText)
+                    .letterpress(isLight: false)
             }
 
-            HairlineDivider()
+            EngravedDivider()
 
             if completedHabitsForSelectedDay.isEmpty {
                 HStack {
@@ -434,6 +481,7 @@ struct CalendarView: View {
                     Text("No habits data for this date")
                         .font(.hostGrotesk(.regular, size: 13))
                         .foregroundStyle(Color.mutedText)
+                        .letterpress(isLight: false)
                         .padding(.vertical, 8)
                     Spacer()
                 }
@@ -441,19 +489,35 @@ struct CalendarView: View {
                 VStack(spacing: 8) {
                     ForEach(completedHabitsForSelectedDay) { habit in
                         HStack(spacing: 10) {
-                            Image(systemName: habit.iconName)
-                                .font(.system(size: 14))
-                                .foregroundStyle(Color.cobaltBlue)
+                            ZStack {
+                                Circle()
+                                    .fill(LinearGradient.wellGradient)
+                                    .frame(width: 26, height: 26)
+                                    .overlay(Circle().strokeBorder(LinearGradient.reverseBevel, lineWidth: 1))
+
+                                Image(systemName: habit.iconName)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color.cobaltBlue)
+                            }
 
                             Text(habit.title)
                                 .font(.hostGrotesk(.regular, size: 14))
                                 .foregroundStyle(Color.primaryText)
+                                .letterpress(isLight: false)
 
                             Spacer()
 
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(Color.cobaltBlue)
+                            ZStack {
+                                Circle()
+                                    .fill(LinearGradient.cobaltEnamel)
+                                    .frame(width: 20, height: 20)
+                                    .overlay(Circle().strokeBorder(LinearGradient(colors: [Color.white.opacity(0.6), Color.black.opacity(0.2)], startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
+                                    .shadow(color: Color.cobaltBlue.opacity(0.3), radius: 2, x: 0, y: 1)
+
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(Color.cobaltLabel)
+                            }
                         }
                         .padding(.vertical, 4)
                     }
@@ -461,9 +525,7 @@ struct CalendarView: View {
             }
         }
         .padding(14)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 14)
     }
 
     // MARK: - Helpers

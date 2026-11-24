@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -47,16 +48,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.habittracker.app.service.SupabaseSyncService
+import com.habittracker.app.theme.BronzeMedalBrush
+import com.habittracker.app.theme.CardBrush
 import com.habittracker.app.theme.CardSurface
+import com.habittracker.app.theme.CharcoalBrush
 import com.habittracker.app.theme.CobaltBlue
+import com.habittracker.app.theme.CobaltEnamelBrush
 import com.habittracker.app.theme.CobaltLabel
+import com.habittracker.app.theme.GoldMedalBrush
 import com.habittracker.app.theme.Hairline
 import com.habittracker.app.theme.InverseSurface
 import com.habittracker.app.theme.InverseText
 import com.habittracker.app.theme.MutedText
 import com.habittracker.app.theme.PageGround
 import com.habittracker.app.theme.PrimaryText
+import com.habittracker.app.theme.ReverseBevel
 import com.habittracker.app.theme.SecondaryText
+import com.habittracker.app.theme.SilverMedalBrush
+import com.habittracker.app.theme.TopLightBevel
+import com.habittracker.app.theme.WellBrush
+import com.habittracker.app.ui.components.EngravedDivider
 
 @Composable
 fun FriendsScreen(syncService: SupabaseSyncService) {
@@ -91,9 +102,10 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
             Box(
                 modifier = Modifier
                     .size(36.dp)
+                    .shadow(2.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(CardSurface)
-                    .border(1.dp, Hairline, CircleShape)
+                    .background(CardBrush)
+                    .border(1.dp, TopLightBevel, CircleShape)
                     .clickable { showAddDialog = true },
                 contentAlignment = Alignment.Center
             ) {
@@ -107,17 +119,20 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .shadow(3.dp, RoundedCornerShape(14.dp))
                 .clip(RoundedCornerShape(14.dp))
-                .background(CardSurface)
-                .border(1.5.dp, CobaltBlue.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+                .background(CardBrush)
+                .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(46.dp)
+                    .shadow(2.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(CobaltBlue),
+                    .background(CobaltEnamelBrush)
+                    .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text("ME", color = CobaltLabel, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
@@ -157,19 +172,28 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
                     fontFamily = FontFamily.Monospace,
                     color = CobaltBlue
                 )
-                Text("Rank #1", fontSize = 11.sp, color = SecondaryText)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(GoldMedalBrush)
+                    )
+                    Spacer(modifier = Modifier.size(3.dp))
+                    Text("Rank #1", fontSize = 11.sp, color = SecondaryText)
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Timeframe Selector
+        // Timeframe Selector (Recessed Trough)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(CardSurface)
-                .border(1.dp, Hairline, RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(10.dp))
+                .background(WellBrush)
+                .border(1.dp, ReverseBevel, RoundedCornerShape(10.dp))
                 .padding(3.dp),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
@@ -178,8 +202,12 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(if (isSel) CobaltBlue else Color.Transparent)
+                        .shadow(if (isSel) 2.dp else 0.dp, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isSel) CobaltEnamelBrush else Color.Transparent)
+                        .then(
+                            if (isSel) Modifier.border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(8.dp)) else Modifier
+                        )
                         .clickable { timeframe = tf }
                         .padding(vertical = 7.dp),
                     contentAlignment = Alignment.Center
@@ -201,9 +229,10 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(3.dp, RoundedCornerShape(14.dp))
                     .clip(RoundedCornerShape(14.dp))
-                    .background(CardSurface)
-                    .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+                    .background(CardBrush)
+                    .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -212,7 +241,8 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
                         modifier = Modifier
                             .size(64.dp)
                             .clip(CircleShape)
-                            .background(CobaltBlue.copy(alpha = 0.12f)),
+                            .background(WellBrush)
+                            .border(1.dp, ReverseBevel, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -235,14 +265,21 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Button(
-                        onClick = { showAddDialog = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = CobaltBlue),
-                        shape = RoundedCornerShape(20.dp)
+                    Box(
+                        modifier = Modifier
+                            .shadow(2.dp, RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(CobaltEnamelBrush)
+                            .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                            .clickable { showAddDialog = true }
+                            .padding(horizontal = 18.dp, vertical = 9.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = CobaltLabel, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.size(4.dp))
-                        Text("Add Friend", color = CobaltLabel, fontSize = 13.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Add, contentDescription = null, tint = CobaltLabel, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.size(4.dp))
+                            Text("Add Friend", color = CobaltLabel, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
@@ -250,29 +287,48 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(3.dp, RoundedCornerShape(14.dp))
                     .clip(RoundedCornerShape(14.dp))
-                    .background(CardSurface)
-                    .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+                    .background(CardBrush)
+                    .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
             ) {
                 itemsIndexed(friends) { index, friend ->
+                    val rankBrush = when (index) {
+                        0 -> GoldMedalBrush
+                        1 -> SilverMedalBrush
+                        2 -> BronzeMedalBrush
+                        else -> WellBrush
+                    }
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 14.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "${index + 1}",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MutedText,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .shadow(1.dp, CircleShape)
+                                .clip(CircleShape)
+                                .background(rankBrush)
+                                .border(0.5.dp, Color.White.copy(alpha = 0.7f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${index + 1}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (index < 3) Color(0xFF261C02) else PrimaryText
+                            )
+                        }
+                        Spacer(modifier = Modifier.size(8.dp))
                         Box(
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(CircleShape)
-                                .background(InverseSurface),
+                                .background(CharcoalBrush)
+                                .border(0.75.dp, Color.White.copy(alpha = 0.25f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(friend.avatarInitials, color = InverseText, fontSize = 13.sp, fontWeight = FontWeight.Medium)
@@ -289,6 +345,9 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
                             fontFamily = FontFamily.Monospace,
                             color = CobaltBlue
                         )
+                    }
+                    if (index < friends.size - 1) {
+                        EngravedDivider()
                     }
                 }
             }

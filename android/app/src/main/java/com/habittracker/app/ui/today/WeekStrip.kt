@@ -18,17 +18,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.habittracker.app.theme.CardBrush
 import com.habittracker.app.theme.CardSurface
 import com.habittracker.app.theme.CobaltBlue
+import com.habittracker.app.theme.CobaltEnamelBrush
 import com.habittracker.app.theme.CobaltLabel
 import com.habittracker.app.theme.Hairline
 import com.habittracker.app.theme.MutedText
 import com.habittracker.app.theme.PrimaryText
+import com.habittracker.app.theme.ReverseBevel
+import com.habittracker.app.theme.TopLightBevel
+import com.habittracker.app.theme.WellBrush
 import java.time.LocalDate
 
 @Composable
@@ -63,7 +69,8 @@ fun WeekStrip(
                     .then(
                         if (isSelected) {
                             Modifier
-                                .background(CardSurface)
+                                .shadow(2.dp, RoundedCornerShape(20.dp))
+                                .background(CardBrush)
                                 .border(1.5.dp, CobaltBlue, RoundedCornerShape(20.dp))
                         } else {
                             Modifier
@@ -85,9 +92,16 @@ fun WeekStrip(
                         .clip(CircleShape)
                         .then(
                             when {
-                                isSelected -> Modifier.background(CobaltBlue)
-                                isToday -> Modifier.border(1.dp, CobaltBlue.copy(alpha = 0.5f), CircleShape)
-                                else -> Modifier.border(1.dp, Hairline, CircleShape)
+                                isSelected -> Modifier
+                                    .shadow(2.dp, CircleShape)
+                                    .background(CobaltEnamelBrush)
+                                    .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                                isToday -> Modifier
+                                    .background(WellBrush)
+                                    .border(1.dp, CobaltBlue.copy(alpha = 0.6f), CircleShape)
+                                else -> Modifier
+                                    .background(WellBrush)
+                                    .border(1.dp, ReverseBevel, CircleShape)
                             }
                         ),
                     contentAlignment = Alignment.Center

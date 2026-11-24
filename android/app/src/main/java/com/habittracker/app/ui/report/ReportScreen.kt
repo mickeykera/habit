@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -46,14 +47,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.habittracker.app.data.Habit
 import com.habittracker.app.data.HabitDao
+import com.habittracker.app.theme.CardBrush
 import com.habittracker.app.theme.CardSurface
 import com.habittracker.app.theme.CobaltBlue
+import com.habittracker.app.theme.CobaltEnamelBrush
 import com.habittracker.app.theme.CobaltLabel
+import com.habittracker.app.theme.GoldMedalBrush
 import com.habittracker.app.theme.Hairline
 import com.habittracker.app.theme.MutedText
 import com.habittracker.app.theme.PageGround
 import com.habittracker.app.theme.PrimaryText
+import com.habittracker.app.theme.ReverseBevel
 import com.habittracker.app.theme.SecondaryText
+import com.habittracker.app.theme.TopLightBevel
+import com.habittracker.app.theme.WellBrush
+import com.habittracker.app.ui.components.EngravedDivider
 import com.habittracker.app.ui.components.HairlineDivider
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -80,37 +88,43 @@ fun ReportScreen(habitDao: HabitDao) {
             .fillMaxSize()
             .background(PageGround)
     ) {
-        // Top Underline Tabs
+        // Top Recessed Segmented Trough
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(WellBrush)
+                .border(1.dp, ReverseBevel, RoundedCornerShape(12.dp))
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.SpaceAround
         ) {
             ReportTab.entries.forEach { tab ->
                 val isSelected = selectedTab == tab
-                Column(
-                    modifier = Modifier.clickable { selectedTab = tab },
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .shadow(if (isSelected) 2.dp else 0.dp, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isSelected) CobaltEnamelBrush else Color.Transparent)
+                        .then(
+                            if (isSelected) Modifier.border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(8.dp)) else Modifier
+                        )
+                        .clickable { selectedTab = tab }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = tab.name.lowercase().replaceFirstChar { it.uppercase() },
-                        fontSize = 16.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) PrimaryText else MutedText
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Box(
-                        modifier = Modifier
-                            .width(36.dp)
-                            .height(2.dp)
-                            .background(if (isSelected) CobaltBlue else Color.Transparent)
+                        fontSize = 14.sp,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                        color = if (isSelected) CobaltLabel else PrimaryText
                     )
                 }
             }
         }
 
-        HairlineDivider()
+        EngravedDivider()
 
         Column(
             modifier = Modifier
@@ -149,9 +163,10 @@ fun ReportScreen(habitDao: HabitDao) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .shadow(3.dp, RoundedCornerShape(14.dp))
                             .clip(RoundedCornerShape(14.dp))
-                            .background(CardSurface)
-                            .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+                            .background(CardBrush)
+                            .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
                             .padding(14.dp)
                     ) {
                         // Header
@@ -170,7 +185,7 @@ fun ReportScreen(habitDao: HabitDao) {
                             }
                         }
 
-                        HairlineDivider()
+                        EngravedDivider()
 
                         // Rows
                         if (habits.isEmpty()) {
@@ -191,9 +206,11 @@ fun ReportScreen(habitDao: HabitDao) {
                                         Box(modifier = Modifier.width(26.dp), contentAlignment = Alignment.Center) {
                                             Box(
                                                 modifier = Modifier
-                                                    .size(14.dp)
+                                                    .size(16.dp)
+                                                    .shadow(1.dp, RoundedCornerShape(3.dp))
                                                     .clip(RoundedCornerShape(3.dp))
-                                                    .background(CobaltBlue)
+                                                    .background(CobaltEnamelBrush)
+                                                    .border(0.5.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
                                             )
                                         }
                                     }
@@ -202,18 +219,35 @@ fun ReportScreen(habitDao: HabitDao) {
                                         Text("100%", fontSize = 11.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.SemiBold, color = CobaltBlue)
                                     }
                                 }
-                                HairlineDivider()
+                                EngravedDivider()
                             }
                         }
 
                         // Best Day Highlight Row
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(WellBrush)
+                                .border(1.dp, ReverseBevel, RoundedCornerShape(8.dp))
+                                .padding(10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Best Day: Wednesday", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = PrimaryText)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clip(CircleShape)
+                                        .background(GoldMedalBrush),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("★", fontSize = 10.sp, color = Color(0xFF261C02))
+                                }
+                                Spacer(modifier = Modifier.size(6.dp))
+                                Text("Best Day: Wednesday", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = PrimaryText)
+                            }
                             Text("100% completed", fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = CobaltBlue)
                         }
                     }
@@ -288,9 +322,10 @@ fun ReportScreen(habitDao: HabitDao) {
 private fun ReportKpiBox(modifier: Modifier = Modifier, title: String, value: String) {
     Box(
         modifier = modifier
+            .shadow(2.dp, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
-            .background(CardSurface)
-            .border(1.dp, Hairline, RoundedCornerShape(12.dp))
+            .background(CardBrush)
+            .border(1.dp, TopLightBevel, RoundedCornerShape(12.dp))
             .padding(vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -306,9 +341,10 @@ private fun ReportKpiBox(modifier: Modifier = Modifier, title: String, value: St
 private fun MiniMonthlyCard(modifier: Modifier = Modifier, title: String) {
     Column(
         modifier = modifier
+            .shadow(2.dp, RoundedCornerShape(14.dp))
             .clip(RoundedCornerShape(14.dp))
-            .background(CardSurface)
-            .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+            .background(CardBrush)
+            .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
             .padding(12.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -316,7 +352,8 @@ private fun MiniMonthlyCard(modifier: Modifier = Modifier, title: String) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
-                    .background(CobaltBlue)
+                    .background(CobaltEnamelBrush)
+                    .border(0.5.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
                     .padding(horizontal = 4.dp, vertical = 2.dp)
             ) {
                 Text("PERFECT", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = CobaltLabel)
@@ -331,14 +368,16 @@ private fun MiniMonthlyCard(modifier: Modifier = Modifier, title: String) {
                         Box(
                             modifier = Modifier
                                 .size(12.dp)
+                                .shadow(0.5.dp, RoundedCornerShape(2.dp))
                                 .clip(RoundedCornerShape(2.dp))
-                                .background(CobaltBlue)
+                                .background(CobaltEnamelBrush)
+                                .border(0.5.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
                         )
                     }
                 }
             }
         }
-        HairlineDivider(modifier = Modifier.padding(vertical = 8.dp))
+        EngravedDivider(modifier = Modifier.padding(vertical = 8.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("83%", fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = CobaltBlue)
             Text("25d done", fontSize = 11.sp, color = SecondaryText)
@@ -351,9 +390,10 @@ private fun YearlyHeatmapCard(habit: Habit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(3.dp, RoundedCornerShape(14.dp))
             .clip(RoundedCornerShape(14.dp))
-            .background(CardSurface)
-            .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+            .background(CardBrush)
+            .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
             .padding(14.dp)
     ) {
         Row(
@@ -383,7 +423,7 @@ private fun YearlyHeatmapCard(habit: Habit) {
                             modifier = Modifier
                                 .size(8.dp)
                                 .clip(RoundedCornerShape(1.5.dp))
-                                .background(CobaltBlue)
+                                .background(CobaltEnamelBrush)
                         )
                     }
                 }

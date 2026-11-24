@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -57,14 +58,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.habittracker.app.data.HabitDao
 import com.habittracker.app.service.SupabaseSyncService
+import com.habittracker.app.theme.CardBrush
 import com.habittracker.app.theme.CardSurface
 import com.habittracker.app.theme.CobaltBlue
+import com.habittracker.app.theme.CobaltEnamelBrush
 import com.habittracker.app.theme.CobaltLabel
 import com.habittracker.app.theme.Hairline
 import com.habittracker.app.theme.MutedText
 import com.habittracker.app.theme.PageGround
 import com.habittracker.app.theme.PrimaryText
+import com.habittracker.app.theme.ReverseBevel
 import com.habittracker.app.theme.SecondaryText
+import com.habittracker.app.theme.TopLightBevel
+import com.habittracker.app.theme.WellBrush
+import com.habittracker.app.ui.components.EngravedDivider
 import com.habittracker.app.ui.components.HairlineDivider
 import kotlinx.coroutines.launch
 
@@ -110,7 +117,7 @@ fun SettingsScreen(
             )
         }
 
-        HairlineDivider()
+        EngravedDivider()
 
         Column(
             modifier = Modifier
@@ -122,17 +129,20 @@ fun SettingsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(3.dp, RoundedCornerShape(14.dp))
                     .clip(RoundedCornerShape(14.dp))
-                    .background(CardSurface)
-                    .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+                    .background(CardBrush)
+                    .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(50.dp)
+                        .shadow(2.dp, CircleShape)
                         .clip(CircleShape)
-                        .background(CobaltBlue),
+                        .background(CobaltEnamelBrush)
+                        .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -183,9 +193,10 @@ fun SettingsScreen(
 
                 Box(
                     modifier = Modifier
+                        .shadow(1.dp, RoundedCornerShape(16.dp))
                         .clip(RoundedCornerShape(16.dp))
-                        .background(PageGround)
-                        .border(1.dp, Hairline, RoundedCornerShape(16.dp))
+                        .background(CardBrush)
+                        .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
                         .clickable {
                             clipboardManager.setText(AnnotatedString(syncService.friendCode))
                             Toast.makeText(context, "Copied friend code", Toast.LENGTH_SHORT).show()
@@ -207,9 +218,10 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(3.dp, RoundedCornerShape(14.dp))
                     .clip(RoundedCornerShape(14.dp))
-                    .background(CardSurface)
-                    .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+                    .background(CardBrush)
+                    .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
                     .padding(14.dp)
             ) {
                 Row(
@@ -248,11 +260,17 @@ fun SettingsScreen(
                                 modifier = Modifier
                                     .size(34.dp)
                                     .clip(CircleShape)
-                                    .background(if (currentMood != null) CobaltBlue.copy(alpha = 0.12f) else PageGround)
-                                    .border(
-                                        1.dp,
-                                        if (currentMood != null) CobaltBlue.copy(alpha = 0.4f) else Hairline,
-                                        CircleShape
+                                    .then(
+                                        if (currentMood != null) {
+                                            Modifier
+                                                .shadow(1.dp, CircleShape)
+                                                .background(CardBrush)
+                                                .border(1.dp, TopLightBevel, CircleShape)
+                                        } else {
+                                            Modifier
+                                                .background(WellBrush)
+                                                .border(1.dp, ReverseBevel, CircleShape)
+                                        }
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -273,27 +291,28 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(3.dp, RoundedCornerShape(14.dp))
                     .clip(RoundedCornerShape(14.dp))
-                    .background(CardSurface)
-                    .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+                    .background(CardBrush)
+                    .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
             ) {
                 SettingsChevronRow(title = "Habit Manager", subtitle = "Manage & archive", icon = Icons.Default.Tune) {
                     Toast.makeText(context, "Habit Manager", Toast.LENGTH_SHORT).show()
                 }
-                HairlineDivider(modifier = Modifier.padding(horizontal = 14.dp))
+                EngravedDivider(modifier = Modifier.padding(horizontal = 14.dp))
                 SettingsChevronRow(title = "Preferences", subtitle = "Monday start · Haptics", icon = Icons.Default.Settings) {
                     showPreferencesDialog = true
                 }
-                HairlineDivider(modifier = Modifier.padding(horizontal = 14.dp))
+                EngravedDivider(modifier = Modifier.padding(horizontal = 14.dp))
                 SettingsChevronRow(title = "Friends Sync (Supabase)", subtitle = if (syncService.isConfigured) "Connected" else "Offline", icon = Icons.Default.Sync) {
                     showSupabaseDialog = true
                 }
-                HairlineDivider(modifier = Modifier.padding(horizontal = 14.dp))
+                EngravedDivider(modifier = Modifier.padding(horizontal = 14.dp))
                 SettingsChevronRow(title = "Data & Backup", subtitle = "Export / Reset", icon = Icons.Default.Storage) {
                     showResetDialog = true
                 }
 
-                HairlineDivider(modifier = Modifier.padding(horizontal = 14.dp))
+                EngravedDivider(modifier = Modifier.padding(horizontal = 14.dp))
 
                 SettingsChevronRow(
                     title = "Sign Out",
@@ -311,9 +330,10 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(3.dp, RoundedCornerShape(14.dp))
                     .clip(RoundedCornerShape(14.dp))
-                    .background(CardSurface)
-                    .border(1.dp, Hairline, RoundedCornerShape(14.dp))
+                    .background(CardBrush)
+                    .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
                     .padding(14.dp)
             ) {
                 Row(
@@ -323,7 +343,7 @@ fun SettingsScreen(
                     Text("About HabitTracker", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
                     Text("v1.0.0", fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = SecondaryText)
                 }
-                HairlineDivider(modifier = Modifier.padding(vertical = 8.dp))
+                EngravedDivider(modifier = Modifier.padding(vertical = 8.dp))
                 Text(
                     text = "100% On-Device & Private. Built with native Kotlin, Room database, and zero-cost cloud sync. Habit names, notes, and metadata never leave your local device.",
                     fontSize = 12.sp,
@@ -495,8 +515,8 @@ private fun SettingsChevronRow(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(PageGround)
-                .border(1.dp, Hairline, CircleShape),
+                .background(WellBrush)
+                .border(1.dp, ReverseBevel, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(icon, contentDescription = null, tint = CobaltBlue, modifier = Modifier.size(15.dp))

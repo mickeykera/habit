@@ -38,20 +38,22 @@ struct AddHabitSheet: View {
                         Text("Habit Name")
                             .font(.hostGrotesk(.medium, size: 13))
                             .foregroundStyle(Color.mutedText)
+                            .letterpress(isLight: false)
 
                         TextField("e.g., Read 20 minutes", text: $title)
                             .font(.hostGrotesk(.regular, size: 16))
                             .padding(12)
-                            .insetCard()
+                            .skeuomorphicWell(cornerRadius: 10)
                     }
 
-                    HairlineDivider()
+                    EngravedDivider()
 
                     // Type picker
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Type")
                             .font(.hostGrotesk(.medium, size: 13))
                             .foregroundStyle(Color.mutedText)
+                            .letterpress(isLight: false)
 
                         Picker("Type", selection: $habitType) {
                             Text("Build").tag(HabitType.build)
@@ -60,13 +62,14 @@ struct AddHabitSheet: View {
                         .pickerStyle(.segmented)
                     }
 
-                    HairlineDivider()
+                    EngravedDivider()
 
                     // Schedule
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Schedule")
                             .font(.hostGrotesk(.medium, size: 13))
                             .foregroundStyle(Color.mutedText)
+                            .letterpress(isLight: false)
 
                         Toggle("Every day", isOn: $isDaily)
                             .font(.hostGrotesk(.regular, size: 16))
@@ -86,26 +89,28 @@ struct AddHabitSheet: View {
                                         Text(weekdayLabels[day])
                                             .font(.hostGrotesk(.medium, size: 13))
                                             .frame(width: 36, height: 36)
-                                            .foregroundStyle(isSelected ? .white : .primaryText)
+                                            .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
+                                            .letterpress(isLight: isSelected)
                                             .background(
                                                 Circle()
-                                                    .fill(isSelected ? Color.cobaltBlue : Color.clear)
+                                                    .fill(isSelected ? LinearGradient.cobaltEnamel : LinearGradient.wellGradient)
                                             )
                                             .overlay(
                                                 Circle()
                                                     .strokeBorder(
-                                                        isSelected ? Color.clear : Color.hairline,
+                                                        isSelected ? LinearGradient(colors: [Color.white.opacity(0.6), Color.black.opacity(0.2)], startPoint: .top, endPoint: .bottom) : LinearGradient.reverseBevel,
                                                         lineWidth: 1
                                                     )
                                             )
+                                            .shadow(color: isSelected ? Color.cobaltBlue.opacity(0.3) : Color.black.opacity(0.04), radius: isSelected ? 2 : 1, x: 0, y: 1)
                                     }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(SkeuomorphicButtonStyle())
                                 }
                             }
                         }
                     }
 
-                    HairlineDivider()
+                    EngravedDivider()
 
                     // Reminder
                     VStack(alignment: .leading, spacing: 8) {
@@ -123,7 +128,7 @@ struct AddHabitSheet: View {
                         }
                     }
 
-                    HairlineDivider()
+                    EngravedDivider()
 
                     // Save button
                     Button {
@@ -131,16 +136,13 @@ struct AddHabitSheet: View {
                     } label: {
                         Text(isEditing ? "Update Habit" : "Add Habit")
                             .font(.hostGrotesk(.semibold, size: 16))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color.cobaltLabel)
+                            .letterpress(isLight: true)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(title.trimmingCharacters(in: .whitespaces).isEmpty
-                                          ? Color.cobaltBlue.opacity(0.4)
-                                          : Color.cobaltBlue)
-                            )
+                            .skeuomorphicCobaltButton(cornerRadius: 12)
                     }
+                    .buttonStyle(SkeuomorphicButtonStyle())
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
 
                     // Edit-mode actions
@@ -154,8 +156,9 @@ struct AddHabitSheet: View {
                                     .foregroundStyle(Color.secondaryText)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 14)
-                                    .insetCard()
+                                    .skeuomorphicCard(cornerRadius: 12)
                             }
+                            .buttonStyle(SkeuomorphicButtonStyle())
 
                             Button(role: .destructive) {
                                 showDeleteConfirmation = true
@@ -165,15 +168,16 @@ struct AddHabitSheet: View {
                                     .foregroundStyle(.red)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 14)
-                                    .insetCard()
+                                    .skeuomorphicCard(cornerRadius: 12)
                             }
+                            .buttonStyle(SkeuomorphicButtonStyle())
                         }
                         .padding(.top, 8)
                     }
                 }
                 .padding(16)
             }
-            .background(Color.pageGround)
+            .paperBackground()
             .navigationTitle(isEditing ? "Edit Habit" : "New Habit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

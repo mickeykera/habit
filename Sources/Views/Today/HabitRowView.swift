@@ -30,19 +30,28 @@ struct HabitRowView: View {
             onToggle()
         } label: {
             HStack(spacing: 12) {
-                // Left: Habit icon badge
+                // Left: Tactile habit icon medallion
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(isCompleted ? Color.cobaltBlue.opacity(0.12) : Color.pageGround)
-                        .frame(width: 40, height: 40)
+                        .fill(isCompleted ? LinearGradient(colors: [Color.cobaltBlue.opacity(0.18), Color.cobaltBlue.opacity(0.08)], startPoint: .top, endPoint: .bottom) : LinearGradient.wellGradient)
+                        .frame(width: 42, height: 42)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(isCompleted ? Color.cobaltBlue.opacity(0.4) : Color.hairline, lineWidth: 1)
+                                .strokeBorder(isCompleted ? LinearGradient(colors: [Color.cobaltBlue.opacity(0.5), Color.cobaltBlue.opacity(0.2)], startPoint: .top, endPoint: .bottom) : LinearGradient.reverseBevel, lineWidth: 1)
+                        )
+                        .overlay(
+                            // Top dark lip for recessed feel
+                            VStack {
+                                Color.black.opacity(isCompleted ? 0.05 : 0.14).frame(height: 2)
+                                Spacer()
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                         )
 
                     Image(systemName: habit.iconName)
-                        .font(.system(size: 17, weight: .medium))
+                        .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(isCompleted ? Color.cobaltBlue : Color.secondaryText)
+                        .shadow(color: isCompleted ? Color.cobaltBlue.opacity(0.4) : Color.white.opacity(0.8), radius: isCompleted ? 3 : 0.5, x: 0, y: isCompleted ? 1 : 0.75)
                 }
 
                 // Center: Title + Progress/Target pill
@@ -50,6 +59,7 @@ struct HabitRowView: View {
                     Text(habit.title)
                         .font(.hostGrotesk(.medium, size: 16))
                         .foregroundStyle(Color.primaryText)
+                        .letterpress(isLight: false)
                         .lineLimit(1)
 
                     HStack(spacing: 6) {
@@ -60,26 +70,32 @@ struct HabitRowView: View {
                                 Text("Slip logged")
                                     .font(.hostGrotesk(.medium, size: 11))
                                     .foregroundStyle(Color.red)
+                                    .letterpress(isLight: false)
                             } else if isCompleted {
                                 Text("Stayed Clean")
                                     .font(.hostGrotesk(.medium, size: 11))
                                     .foregroundStyle(Color.cobaltBlue)
+                                    .letterpress(isLight: false)
                             }
                         } else {
-                            // Target / Progress pill
+                            // Tactile Recessed Progress Pill
                             HStack(spacing: 3) {
                                 Text(isCompleted ? "1/1" : "0/1")
                                     .font(.hostGrotesk(.medium, size: 11))
                                     .monospacedDigit()
                                     .foregroundStyle(isCompleted ? Color.cobaltBlue : Color.mutedText)
+                                    .letterpress(isLight: false)
                             }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(isCompleted ? Color.cobaltBlue.opacity(0.1) : Color.cardSurface)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2.5)
+                            .background(
+                                Capsule()
+                                    .fill(isCompleted ? LinearGradient(colors: [Color.cobaltBlue.opacity(0.14), Color.cobaltBlue.opacity(0.06)], startPoint: .top, endPoint: .bottom) : LinearGradient.wellGradient)
+                            )
                             .clipShape(Capsule())
                             .overlay(
                                 Capsule()
-                                    .stroke(isCompleted ? Color.cobaltBlue.opacity(0.3) : Color.hairline, lineWidth: 1)
+                                    .strokeBorder(isCompleted ? LinearGradient(colors: [Color.cobaltBlue.opacity(0.4), Color.cobaltBlue.opacity(0.2)], startPoint: .top, endPoint: .bottom) : LinearGradient.reverseBevel, lineWidth: 1)
                             )
                         }
                     }
@@ -87,15 +103,28 @@ struct HabitRowView: View {
 
                 Spacer()
 
-                // Right: Streak label above completion button
+                // Right: Streak label above physical push-button
                 VStack(spacing: 3) {
                     if streakCount > 0 {
-                        Text("\(streakCount)d")
-                            .font(.hostGrotesk(.semibold, size: 11))
-                            .monospacedDigit()
-                            .foregroundStyle(isCompleted ? Color.cobaltBlue : Color.mutedText)
+                        // Tactile streak counter badge
+                        HStack(spacing: 2) {
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 8))
+                                .foregroundStyle(isCompleted ? Color.cobaltBlue : Color.mutedText)
+                            Text("\(streakCount)d")
+                                .font(.hostGrotesk(.semibold, size: 11))
+                                .monospacedDigit()
+                                .foregroundStyle(isCompleted ? Color.cobaltBlue : Color.mutedText)
+                                .letterpress(isLight: false)
+                        }
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1.5)
+                        .background(
+                            Capsule()
+                                .fill(isCompleted ? Color.cobaltBlue.opacity(0.10) : Color.black.opacity(0.04))
+                        )
+                        .clipShape(Capsule())
                     } else {
-                        // Invisible placeholder for height consistency
                         Text(" ")
                             .font(.hostGrotesk(.semibold, size: 11))
                     }
@@ -108,15 +137,42 @@ struct HabitRowView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(isCompleted ? Color.cobaltBlue.opacity(0.08) : Color.cardSurface)
+            // Raised physical card tile
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        isCompleted
+                            ? LinearGradient(colors: [Color.cardTop, Color.cobaltBlue.opacity(0.06)], startPoint: .top, endPoint: .bottom)
+                            : LinearGradient.cardGradient
+                    )
+            )
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(isCompleted ? Color.cobaltBlue : Color.hairline, lineWidth: 1)
+                    .strokeBorder(
+                        isCompleted
+                            ? LinearGradient(colors: [Color.white.opacity(0.7), Color.cobaltBlue.opacity(0.35)], startPoint: .top, endPoint: .bottom)
+                            : LinearGradient.topLightBevel,
+                        lineWidth: 1
+                    )
             )
+            .overlay(
+                // Crisp top specular highlight rim
+                VStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(Color.white.opacity(0.65), lineWidth: 1)
+                        .frame(height: 14)
+                        .mask(VStack { Rectangle().frame(height: 2); Spacer() })
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .allowsHitTesting(false)
+            )
+            .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
+            .shadow(color: Color(red: 0x36 / 255.0, green: 0x30 / 255.0, blue: 0x24 / 255.0).opacity(0.08), radius: 6, x: 0, y: 3)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SkeuomorphicButtonStyle())
         .sensoryFeedback(.impact, trigger: isCompleted)
         .swipeActions(edge: .leading) {
             Button {

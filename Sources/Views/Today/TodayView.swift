@@ -70,56 +70,62 @@ struct TodayView: View {
                         Text(selectedFilter.rawValue)
                             .font(.hostGrotesk(.medium, size: 13))
                             .foregroundStyle(Color.primaryText)
+                            .letterpress(isLight: false)
 
                         Image(systemName: "chevron.down")
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(Color.mutedText)
                     }
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 11)
                     .padding(.vertical, 6)
-                    .background(Color.cardSurface)
+                    .background(
+                        Capsule().fill(LinearGradient.cardGradient)
+                    )
                     .clipShape(Capsule())
                     .overlay(
-                        Capsule()
-                            .stroke(Color.hairline, lineWidth: 1)
+                        Capsule().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1)
                     )
+                    .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
+                .buttonStyle(SkeuomorphicButtonStyle())
 
                 Spacer()
 
                 // Center: Today title
                 VStack(spacing: 2) {
                     Text("Today")
-                        .font(.hostGrotesk(.medium, size: 22))
+                        .font(.hostGrotesk(.semibold, size: 22))
                         .foregroundStyle(Color.primaryText)
+                        .letterpress(isLight: false)
 
                     Text("\(completedCount) / \(scheduledHabits.count)")
                         .font(.hostGrotesk(.medium, size: 12))
                         .monospacedDigit()
                         .foregroundStyle(Color.cobaltBlue)
+                        .letterpress(isLight: false)
                 }
 
                 Spacer()
 
-                // Right: Profile/Status button
+                // Right: Tactile Add button
                 Button {
                     showAddSheet = true
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(Color.cardSurface)
-                            .frame(width: 34, height: 34)
+                            .fill(LinearGradient.cardGradient)
+                            .frame(width: 36, height: 36)
                             .overlay(
-                                Circle()
-                                    .stroke(Color.hairline, lineWidth: 1)
+                                Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1)
                             )
+                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
 
                         Image(systemName: "plus")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(Color.cobaltBlue)
                     }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SkeuomorphicButtonStyle())
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
@@ -178,7 +184,7 @@ struct TodayView: View {
                 }
             }
         }
-        .background(Color.pageGround)
+        .paperBackground()
         .task {
             autoSyncDailyStats()
         }

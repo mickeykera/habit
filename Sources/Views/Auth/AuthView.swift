@@ -14,85 +14,95 @@ struct AuthView: View {
     @State private var isLoading: Bool = false
 
     var body: some View {
-        ZStack {
-            Color.pageGround
-                .ignoresSafeArea()
+        ScrollView {
+            VStack(spacing: 24) {
+                Spacer().frame(height: 32)
 
-            ScrollView {
-                VStack(spacing: 24) {
-                    Spacer().frame(height: 32)
+                // Header & Brand Logo
+                VStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(LinearGradient.cardGradient)
+                            .frame(width: 64, height: 64)
+                            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(LinearGradient.topLightBevel, lineWidth: 1.5))
+                            .shadow(color: Color.black.opacity(0.08), radius: 3, x: 0, y: 2)
 
-                    // Header & Brand Logo
-                    VStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.cardSurface)
-                                .frame(width: 60, height: 60)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(Color.hairline, lineWidth: 1)
-                                )
-
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 28))
-                                .foregroundStyle(Color.cobaltBlue)
-                        }
-
-                        VStack(spacing: 4) {
-                            Text("Habit Tracker")
-                                .font(.hostGrotesk(.bold, size: 28))
-                                .foregroundStyle(Color.primaryText)
-
-                            Text("Build discipline, break barriers.")
-                                .font(.hostGrotesk(.regular, size: 14))
-                                .foregroundStyle(Color.secondaryText)
-                        }
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 30))
+                            .foregroundStyle(Color.cobaltBlue)
                     }
 
-                    // Mode Switcher Pill (Sign In / Sign Up)
-                    HStack(spacing: 0) {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isSignUp = false
-                                errorMessage = nil
-                            }
-                        } label: {
-                            Text("Sign In")
-                                .font(.hostGrotesk(.medium, size: 14))
-                                .foregroundStyle(!isSignUp ? Color.primaryText : Color.mutedText)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(
-                                    !isSignUp ? Color.pageGround : Color.clear
-                                )
-                                .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
+                    VStack(spacing: 4) {
+                        Text("Habit Tracker")
+                            .font(.hostGrotesk(.bold, size: 28))
+                            .foregroundStyle(Color.primaryText)
+                            .letterpress(isLight: false)
 
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isSignUp = true
-                                errorMessage = nil
-                            }
-                        } label: {
-                            Text("Create Account")
-                                .font(.hostGrotesk(.medium, size: 14))
-                                .foregroundStyle(isSignUp ? Color.primaryText : Color.mutedText)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(
-                                    isSignUp ? Color.pageGround : Color.clear
-                                )
-                                .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
+                        Text("Build discipline, break barriers.")
+                            .font(.hostGrotesk(.regular, size: 14))
+                            .foregroundStyle(Color.secondaryText)
+                            .letterpress(isLight: false)
                     }
-                    .padding(4)
-                    .background(Color.cardSurface)
-                    .clipShape(Capsule())
-                    .overlay(
-                        Capsule().stroke(Color.hairline, lineWidth: 1)
-                    )
+                }
+
+                // Mode Switcher Pill (Sign In / Sign Up)
+                HStack(spacing: 4) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isSignUp = false
+                            errorMessage = nil
+                        }
+                    } label: {
+                        Text("Sign In")
+                            .font(.hostGrotesk(.medium, size: 14))
+                            .foregroundStyle(!isSignUp ? Color.cobaltLabel : Color.primaryText)
+                            .letterpress(isLight: !isSignUp)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(
+                                Group {
+                                    if !isSignUp {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(LinearGradient.cobaltEnamel)
+                                            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(LinearGradient(colors: [Color.white.opacity(0.65), Color.black.opacity(0.2)], startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
+                                            .shadow(color: Color.cobaltBlue.opacity(0.35), radius: 2, x: 0, y: 1)
+                                    } else {
+                                        Color.clear
+                                    }
+                                }
+                            )
+                    }
+                    .buttonStyle(SkeuomorphicButtonStyle())
+
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isSignUp = true
+                            errorMessage = nil
+                        }
+                    } label: {
+                        Text("Create Account")
+                            .font(.hostGrotesk(.medium, size: 14))
+                            .foregroundStyle(isSignUp ? Color.cobaltLabel : Color.primaryText)
+                            .letterpress(isLight: isSignUp)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(
+                                Group {
+                                    if isSignUp {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(LinearGradient.cobaltEnamel)
+                                            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(LinearGradient(colors: [Color.white.opacity(0.65), Color.black.opacity(0.2)], startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
+                                            .shadow(color: Color.cobaltBlue.opacity(0.35), radius: 2, x: 0, y: 1)
+                                    } else {
+                                        Color.clear
+                                    }
+                                }
+                            )
+                    }
+                    .buttonStyle(SkeuomorphicButtonStyle())
+                }
+                .padding(4)
+                .skeuomorphicWell(cornerRadius: 12)
 
                     // Error Banner
                     if let errorMessage {
@@ -121,17 +131,13 @@ struct AuthView: View {
                                 Text("Display Name")
                                     .font(.hostGrotesk(.medium, size: 12))
                                     .foregroundStyle(Color.secondaryText)
+                                    .letterpress(isLight: false)
 
                                 TextField("e.g. Alex Rivera", text: $displayName)
                                     .font(.hostGrotesk(.regular, size: 15))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 12)
-                                    .background(Color.pageGround)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.hairline, lineWidth: 1)
-                                    )
+                                    .skeuomorphicWell(cornerRadius: 10)
                             }
                         }
 
@@ -139,6 +145,7 @@ struct AuthView: View {
                             Text("Email Address")
                                 .font(.hostGrotesk(.medium, size: 12))
                                 .foregroundStyle(Color.secondaryText)
+                                .letterpress(isLight: false)
 
                             TextField("name@example.com", text: $email)
                                 .font(.hostGrotesk(.regular, size: 15))
@@ -147,29 +154,20 @@ struct AuthView: View {
                                 .autocorrectionDisabled()
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
-                                .background(Color.pageGround)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.hairline, lineWidth: 1)
-                                )
+                                .skeuomorphicWell(cornerRadius: 10)
                         }
 
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Password")
                                 .font(.hostGrotesk(.medium, size: 12))
                                 .foregroundStyle(Color.secondaryText)
+                                .letterpress(isLight: false)
 
                             SecureField("••••••••", text: $password)
                                 .font(.system(size: 15))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
-                                .background(Color.pageGround)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.hairline, lineWidth: 1)
-                                )
+                                .skeuomorphicWell(cornerRadius: 10)
                         }
 
                         Spacer().frame(height: 4)
@@ -186,35 +184,28 @@ struct AuthView: View {
                                 Text(isSignUp ? "Create Account" : "Sign In")
                                     .font(.hostGrotesk(.semibold, size: 15))
                                     .foregroundStyle(Color.cobaltLabel)
+                                    .letterpress(isLight: true)
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.cobaltBlue)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .skeuomorphicCobaltButton(cornerRadius: 12)
                         }
+                        .buttonStyle(SkeuomorphicButtonStyle())
                         .disabled(isLoading || email.isEmpty || password.isEmpty)
                         .opacity((email.isEmpty || password.isEmpty) ? 0.6 : 1.0)
                     }
                     .padding(18)
-                    .background(Color.cardSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.hairline, lineWidth: 1)
-                    )
+                    .skeuomorphicCard(cornerRadius: 16)
 
                     // OR Divider
-                    HStack {
-                        Rectangle()
-                            .fill(Color.hairline)
-                            .frame(height: 1)
+                    HStack(spacing: 12) {
+                        EngravedDivider()
                         Text("OR CONTINUE WITH")
                             .font(.hostGrotesk(.semibold, size: 11))
                             .foregroundStyle(Color.mutedText)
-                            .padding(.horizontal, 8)
-                        Rectangle()
-                            .fill(Color.hairline)
-                            .frame(height: 1)
+                            .letterpress(isLight: false)
+                            .fixedSize()
+                        EngravedDivider()
                     }
                     .padding(.vertical, 4)
 
@@ -243,7 +234,7 @@ struct AuthView: View {
                 }
                 .padding(.horizontal, 20)
             }
-        }
+            .paperBackground()
     }
 
     // MARK: - Actions
@@ -311,6 +302,7 @@ private struct OAuthButton: View {
                 Text(title)
                     .font(.hostGrotesk(.medium, size: 14))
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
 
                 Spacer()
 
@@ -320,13 +312,8 @@ private struct OAuthButton: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 13)
-            .background(Color.cardSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.hairline, lineWidth: 1)
-            )
+            .skeuomorphicCard(cornerRadius: 12)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SkeuomorphicButtonStyle())
     }
 }

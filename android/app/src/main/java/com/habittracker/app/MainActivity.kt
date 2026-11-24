@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -46,14 +47,19 @@ import androidx.compose.ui.unit.sp
 import com.habittracker.app.data.AppDatabase
 import com.habittracker.app.data.Habit
 import com.habittracker.app.service.SupabaseSyncService
+import com.habittracker.app.theme.CardBrush
 import com.habittracker.app.theme.CardSurface
 import com.habittracker.app.theme.CobaltBlue
+import com.habittracker.app.theme.CobaltEnamelBrush
 import com.habittracker.app.theme.CobaltLabel
 import com.habittracker.app.theme.Hairline
 import com.habittracker.app.theme.HabitTrackerTheme
 import com.habittracker.app.theme.MutedText
 import com.habittracker.app.theme.PageGround
+import com.habittracker.app.theme.ReverseBevel
 import com.habittracker.app.theme.SecondaryText
+import com.habittracker.app.theme.TopLightBevel
+import com.habittracker.app.theme.WellBrush
 import com.habittracker.app.ui.auth.AuthScreen
 import com.habittracker.app.ui.calendar.CalendarScreen
 import com.habittracker.app.ui.friends.FriendsScreen
@@ -118,9 +124,10 @@ fun MainScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 10.dp)
+                    .shadow(8.dp, RoundedCornerShape(32.dp))
                     .clip(RoundedCornerShape(32.dp))
-                    .background(CardSurface)
-                    .border(1.dp, Hairline, RoundedCornerShape(32.dp))
+                    .background(CardBrush)
+                    .border(1.dp, TopLightBevel, RoundedCornerShape(32.dp))
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 Row(
@@ -136,8 +143,10 @@ fun MainScreen(
                             Box(
                                 modifier = Modifier
                                     .size(42.dp)
+                                    .shadow(4.dp, CircleShape)
                                     .clip(CircleShape)
-                                    .background(CobaltBlue)
+                                    .background(CobaltEnamelBrush)
+                                    .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
                                     .clickable { showAddHabitDialog = true },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -153,7 +162,15 @@ fun MainScreen(
                                 modifier = Modifier
                                     .height(38.dp)
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(if (isSelected) CobaltBlue.copy(alpha = 0.12f) else Color.Transparent)
+                                    .then(
+                                        if (isSelected) {
+                                            Modifier
+                                                .background(WellBrush)
+                                                .border(1.dp, ReverseBevel, RoundedCornerShape(16.dp))
+                                        } else {
+                                            Modifier
+                                        }
+                                    )
                                     .clickable { selectedIndex = index }
                                     .padding(horizontal = 14.dp),
                                 contentAlignment = Alignment.Center

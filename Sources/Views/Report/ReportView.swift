@@ -30,13 +30,13 @@ struct ReportView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Top Segmented Underline Tabs
-            topUnderlineTabs
+            // Top Recessed Segmented Trough
+            topSegmentedTrough
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
                 .padding(.bottom, 8)
 
-            HairlineDivider()
+            EngravedDivider()
 
             ScrollView {
                 VStack(spacing: 16) {
@@ -54,12 +54,12 @@ struct ReportView: View {
                 .padding(.bottom, 96) // Floating nav bar padding
             }
         }
-        .background(Color.pageGround)
+        .paperBackground()
     }
 
-    // MARK: - Top Segmented Underline Tabs
-    private var topUnderlineTabs: some View {
-        HStack(spacing: 24) {
+    // MARK: - Top Segmented Trough
+    private var topSegmentedTrough: some View {
+        HStack(spacing: 4) {
             ForEach(ReportTimeScope.allCases) { scope in
                 let isSelected = selectedScope == scope
                 Button {
@@ -67,21 +67,33 @@ struct ReportView: View {
                         selectedScope = scope
                     }
                 } label: {
-                    VStack(spacing: 6) {
-                        Text(scope.rawValue)
-                            .font(.hostGrotesk(isSelected ? .bold : .medium, size: 17))
-                            .foregroundStyle(isSelected ? Color.primaryText : Color.mutedText)
-
-                        // 2pt cobalt underline
-                        Rectangle()
-                            .fill(isSelected ? Color.cobaltBlue : Color.clear)
-                            .frame(height: 2)
-                    }
+                    Text(scope.rawValue)
+                        .font(.hostGrotesk(isSelected ? .semibold : .medium, size: 14))
+                        .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
+                        .letterpress(isLight: isSelected)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            Group {
+                                if isSelected {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(LinearGradient.cobaltEnamel)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .strokeBorder(LinearGradient(colors: [Color.white.opacity(0.65), Color.black.opacity(0.2)], startPoint: .top, endPoint: .bottom), lineWidth: 0.75)
+                                        )
+                                        .shadow(color: Color.cobaltBlue.opacity(0.35), radius: 2, x: 0, y: 1)
+                                } else {
+                                    Color.clear
+                                }
+                            }
+                        )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SkeuomorphicButtonStyle())
             }
-            Spacer()
         }
+        .padding(4)
+        .skeuomorphicWell(cornerRadius: 12)
     }
 
     // MARK: ==========================================
@@ -96,10 +108,15 @@ struct ReportView: View {
                     changeWeek(by: -1)
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.primaryText)
                         .frame(width: 32, height: 32)
+                        .background(Circle().fill(LinearGradient.cardGradient))
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
+                .buttonStyle(SkeuomorphicButtonStyle())
 
                 Spacer()
 
@@ -107,6 +124,7 @@ struct ReportView: View {
                     .font(.hostGrotesk(.medium, size: 15))
                     .monospacedDigit()
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
 
                 Spacer()
 
@@ -114,10 +132,15 @@ struct ReportView: View {
                     changeWeek(by: 1)
                 } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.primaryText)
                         .frame(width: 32, height: 32)
+                        .background(Circle().fill(LinearGradient.cardGradient))
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
+                .buttonStyle(SkeuomorphicButtonStyle())
             }
 
             if habits.isEmpty {
@@ -141,23 +164,26 @@ struct ReportView: View {
                 Text("Habit")
                     .font(.hostGrotesk(.medium, size: 12))
                     .foregroundStyle(Color.mutedText)
+                    .letterpress(isLight: false)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 ForEach(0..<7, id: \.self) { i in
                     Text(dayLabels[i])
                         .font(.hostGrotesk(.medium, size: 12))
                         .foregroundStyle(Color.mutedText)
+                        .letterpress(isLight: false)
                         .frame(width: 28)
                 }
 
                 Text("Total")
                     .font(.hostGrotesk(.medium, size: 11))
                     .foregroundStyle(Color.mutedText)
+                    .letterpress(isLight: false)
                     .frame(width: 44, alignment: .trailing)
             }
             .padding(.bottom, 8)
 
-            HairlineDivider()
+            EngravedDivider()
 
             // Habit Rows
             ForEach(habits) { habit in
@@ -172,6 +198,7 @@ struct ReportView: View {
                         Text(habit.title)
                             .font(.hostGrotesk(.regular, size: 13))
                             .foregroundStyle(Color.primaryText)
+                            .letterpress(isLight: false)
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -191,40 +218,51 @@ struct ReportView: View {
                             .font(.hostGrotesk(.semibold, size: 11))
                             .monospacedDigit()
                             .foregroundStyle(completionData.rate >= 0.999 ? Color.cobaltBlue : Color.secondaryText)
+                            .letterpress(isLight: false)
                     }
                     .frame(width: 44, alignment: .trailing)
                 }
                 .padding(.vertical, 8)
 
-                HairlineDivider()
+                EngravedDivider()
             }
 
             // Best Day Highlight Row
             let bestDay = computeBestDay(weekDates: weekDates)
             HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.cobaltBlue)
+                HStack(spacing: 7) {
+                    ZStack {
+                        Circle()
+                            .fill(LinearGradient.goldGradient)
+                            .frame(width: 22, height: 22)
+                            .overlay(Circle().strokeBorder(Color.white.opacity(0.8), lineWidth: 0.5))
+                            .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 0.5)
+
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color(red: 0.24, green: 0.17, blue: 0.02))
+                    }
 
                     Text("Best Day: \(bestDay.name)")
                         .font(.hostGrotesk(.medium, size: 13))
                         .foregroundStyle(Color.primaryText)
+                        .letterpress(isLight: false)
                 }
 
                 Spacer()
 
                 Text("\(Int(round(bestDay.rate * 100)))% completed")
-                    .font(.hostGrotesk(.medium, size: 12))
+                    .font(.hostGrotesk(.semibold, size: 12))
                     .monospacedDigit()
                     .foregroundStyle(Color.cobaltBlue)
+                    .letterpress(isLight: false)
             }
+            .padding(10)
+            .skeuomorphicWell(cornerRadius: 10)
             .padding(.top, 10)
         }
         .padding(14)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 16)
     }
 
     private var weeklyKpiFooter: some View {
@@ -245,17 +283,17 @@ struct ReportView: View {
                 .font(.hostGrotesk(.bold, size: 18))
                 .monospacedDigit()
                 .foregroundStyle(Color.cobaltBlue)
+                .letterpress(isLight: false)
 
             Text(title)
                 .font(.hostGrotesk(.regular, size: 11))
                 .foregroundStyle(Color.mutedText)
+                .letterpress(isLight: false)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 12)
     }
 
     // MARK: ==========================================
@@ -270,16 +308,22 @@ struct ReportView: View {
                     changeMonth(by: -1)
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.primaryText)
                         .frame(width: 32, height: 32)
+                        .background(Circle().fill(LinearGradient.cardGradient))
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
+                .buttonStyle(SkeuomorphicButtonStyle())
 
                 Spacer()
 
                 Text(monthYearHeaderString)
                     .font(.hostGrotesk(.medium, size: 16))
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
 
                 Spacer()
 
@@ -287,10 +331,15 @@ struct ReportView: View {
                     changeMonth(by: 1)
                 } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.primaryText)
                         .frame(width: 32, height: 32)
+                        .background(Circle().fill(LinearGradient.cardGradient))
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
+                .buttonStyle(SkeuomorphicButtonStyle())
             }
 
             if habits.isEmpty {
@@ -348,6 +397,7 @@ struct ReportView: View {
                     Text(habit.title)
                         .font(.hostGrotesk(.semibold, size: 13))
                         .foregroundStyle(Color.primaryText)
+                        .letterpress(isLight: false)
                         .lineLimit(1)
 
                     Spacer()
@@ -356,10 +406,12 @@ struct ReportView: View {
                         Text("PERFECT")
                             .font(.hostGrotesk(.bold, size: 9))
                             .foregroundStyle(Color.cobaltLabel)
-                            .padding(.horizontal, 5)
+                            .letterpress(isLight: true)
+                            .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.cobaltBlue)
+                            .background(LinearGradient.cobaltEnamel)
                             .clipShape(Capsule())
+                            .overlay(Capsule().strokeBorder(Color.white.opacity(0.6), lineWidth: 0.5))
                     }
                 }
 
@@ -368,23 +420,33 @@ struct ReportView: View {
                 LazyVGrid(columns: gridCols, spacing: 3) {
                     ForEach(daysData, id: \.day) { item in
                         ZStack {
-                            RoundedRectangle(cornerRadius: 2.5)
-                                .fill(item.isDone ? Color.cobaltBlue : (item.isSched ? Color.cardSurface : Color.clear))
-                                .frame(height: 14)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 2.5)
-                                        .stroke(item.isDone ? Color.clear : (item.isSched ? Color.hairline : Color.clear), lineWidth: 1)
-                                )
+                            if item.isDone {
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(LinearGradient.cobaltEnamel)
+                                    .frame(height: 15)
+                                    .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(LinearGradient(colors: [Color.white.opacity(0.6), Color.black.opacity(0.2)], startPoint: .top, endPoint: .bottom), lineWidth: 0.5))
+                                    .shadow(color: Color.cobaltBlue.opacity(0.25), radius: 1, x: 0, y: 0.5)
+                            } else if item.isSched {
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(LinearGradient.wellGradient)
+                                    .frame(height: 15)
+                                    .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(LinearGradient.reverseBevel, lineWidth: 0.5))
+                            } else {
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(Color.clear)
+                                    .frame(height: 15)
+                            }
 
                             Text("\(item.day)")
                                 .font(.system(size: 8, weight: .medium))
                                 .monospacedDigit()
                                 .foregroundStyle(item.isDone ? Color.cobaltLabel : Color.mutedText)
+                                .letterpress(isLight: item.isDone)
                         }
                     }
                 }
 
-                HairlineDivider()
+                EngravedDivider()
 
                 // Bottom Footer: Rate % + Done Count
                 HStack {
@@ -392,6 +454,7 @@ struct ReportView: View {
                         .font(.hostGrotesk(.bold, size: 14))
                         .monospacedDigit()
                         .foregroundStyle(Color.cobaltBlue)
+                        .letterpress(isLight: false)
 
                     Spacer()
 
@@ -399,12 +462,11 @@ struct ReportView: View {
                         .font(.hostGrotesk(.medium, size: 11))
                         .monospacedDigit()
                         .foregroundStyle(Color.secondaryText)
+                        .letterpress(isLight: false)
                 }
             }
             .padding(12)
-            .background(Color.cardSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+            .skeuomorphicCard(cornerRadius: 14)
         )
     }
 
@@ -420,10 +482,15 @@ struct ReportView: View {
                     selectedYear -= 1
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.primaryText)
                         .frame(width: 32, height: 32)
+                        .background(Circle().fill(LinearGradient.cardGradient))
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
+                .buttonStyle(SkeuomorphicButtonStyle())
 
                 Spacer()
 
@@ -431,6 +498,7 @@ struct ReportView: View {
                     .font(.hostGrotesk(.bold, size: 18))
                     .monospacedDigit()
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
 
                 Spacer()
 
@@ -438,10 +506,15 @@ struct ReportView: View {
                     selectedYear += 1
                 } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.primaryText)
                         .frame(width: 32, height: 32)
+                        .background(Circle().fill(LinearGradient.cardGradient))
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
+                .buttonStyle(SkeuomorphicButtonStyle())
             }
 
             if habits.isEmpty {
@@ -471,6 +544,7 @@ struct ReportView: View {
                     Text(habit.title)
                         .font(.hostGrotesk(.semibold, size: 15))
                         .foregroundStyle(Color.primaryText)
+                        .letterpress(isLight: false)
                 }
 
                 Spacer()
@@ -480,6 +554,7 @@ struct ReportView: View {
                         .font(.hostGrotesk(.bold, size: 15))
                         .monospacedDigit()
                         .foregroundStyle(Color.cobaltBlue)
+                        .letterpress(isLight: false)
 
                     Text("·")
                         .foregroundStyle(Color.mutedText)
@@ -488,6 +563,7 @@ struct ReportView: View {
                         .font(.hostGrotesk(.semibold, size: 13))
                         .monospacedDigit()
                         .foregroundStyle(Color.secondaryText)
+                        .letterpress(isLight: false)
                 }
             }
 
@@ -498,9 +574,18 @@ struct ReportView: View {
                         VStack(spacing: 3) {
                             ForEach(0..<7, id: \.self) { dayOfWeek in
                                 let cellState = stats.grid[weekIndex * 7 + dayOfWeek]
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(cellFillColor(cellState))
-                                    .frame(width: 9, height: 9)
+                                if cellState == 1 {
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(LinearGradient.cobaltEnamel)
+                                        .frame(width: 9, height: 9)
+                                        .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(LinearGradient(colors: [Color.white.opacity(0.6), Color.black.opacity(0.2)], startPoint: .top, endPoint: .bottom), lineWidth: 0.5))
+                                        .shadow(color: Color.cobaltBlue.opacity(0.25), radius: 0.5, x: 0, y: 0.5)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(LinearGradient.wellGradient)
+                                        .frame(width: 9, height: 9)
+                                        .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(LinearGradient.reverseBevel, lineWidth: 0.5))
+                                }
                             }
                         }
                     }
@@ -509,19 +594,7 @@ struct ReportView: View {
             }
         }
         .padding(14)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
-    }
-
-    private func cellFillColor(_ state: Int) -> Color {
-        // 0 = unscheduled / not done, 1 = completed
-        switch state {
-        case 1:
-            return Color.cobaltBlue
-        default:
-            return Color.pageGround
-        }
+        .skeuomorphicCard(cornerRadius: 16)
     }
 
     // MARK: - Helpers & Data Computation
@@ -531,15 +604,15 @@ struct ReportView: View {
             Text("No active habits")
                 .font(.hostGrotesk(.medium, size: 16))
                 .foregroundStyle(Color.secondaryText)
+                .letterpress(isLight: false)
             Text("Create habits in the Today tab to view reports.")
                 .font(.hostGrotesk(.regular, size: 13))
                 .foregroundStyle(Color.mutedText)
+                .letterpress(isLight: false)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 32)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 14)
     }
 
     private static func mondayOfCurrentWeek() -> Date {

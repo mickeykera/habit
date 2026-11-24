@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -46,15 +47,21 @@ import com.habittracker.app.data.HabitDao
 import com.habittracker.app.data.HabitLog
 import com.habittracker.app.data.HabitType
 import com.habittracker.app.domain.StreakCalculator
+import com.habittracker.app.theme.CardBrush
 import com.habittracker.app.theme.CardSurface
 import com.habittracker.app.theme.CobaltBlue
 import com.habittracker.app.theme.CobaltLabel
 import com.habittracker.app.theme.Hairline
 import com.habittracker.app.theme.MutedText
 import com.habittracker.app.theme.PageGround
+import com.habittracker.app.theme.PaperLight
 import com.habittracker.app.theme.PrimaryText
+import com.habittracker.app.theme.ReverseBevel
 import com.habittracker.app.theme.SecondaryText
+import com.habittracker.app.theme.TopLightBevel
+import com.habittracker.app.theme.WellBrush
 import com.habittracker.app.ui.components.CompletionCircle
+import com.habittracker.app.ui.components.EngravedDivider
 import com.habittracker.app.ui.components.HairlineDivider
 import com.habittracker.app.ui.components.InverseBadge
 import kotlinx.coroutines.launch
@@ -113,9 +120,10 @@ fun TodayScreen(
             Box {
                 Row(
                     modifier = Modifier
+                        .shadow(2.dp, RoundedCornerShape(16.dp))
                         .clip(RoundedCornerShape(16.dp))
-                        .background(CardSurface)
-                        .border(1.dp, Hairline, RoundedCornerShape(16.dp))
+                        .background(CardBrush)
+                        .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
                         .clickable { showFilterMenu = true }
                         .padding(horizontal = 10.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -171,9 +179,10 @@ fun TodayScreen(
             Box(
                 modifier = Modifier
                     .size(34.dp)
+                    .shadow(2.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(CardSurface)
-                    .border(1.dp, Hairline, CircleShape)
+                    .background(CardBrush)
+                    .border(1.dp, TopLightBevel, CircleShape)
                     .clickable { onOpenAdd() },
                 contentAlignment = Alignment.Center
             ) {
@@ -192,7 +201,7 @@ fun TodayScreen(
             onDateSelected = { selectedDate = it }
         )
 
-        HairlineDivider(modifier = Modifier.padding(top = 4.dp))
+        EngravedDivider(modifier = Modifier.padding(top = 4.dp))
 
         // Habit List
         if (scheduledHabits.isEmpty()) {
@@ -235,11 +244,12 @@ fun TodayScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .shadow(if (isDone) 1.dp else 2.dp, RoundedCornerShape(14.dp))
                             .clip(RoundedCornerShape(14.dp))
-                            .background(if (isDone) CobaltBlue.copy(alpha = 0.08f) else CardSurface)
+                            .background(if (isDone) CobaltBlue.copy(alpha = 0.08f) else CardBrush)
                             .border(
                                 1.dp,
-                                if (isDone) CobaltBlue else Hairline,
+                                if (isDone) CobaltBlue else TopLightBevel,
                                 RoundedCornerShape(14.dp)
                             )
                             .clickable {
@@ -262,10 +272,10 @@ fun TodayScreen(
                             modifier = Modifier
                                 .size(38.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isDone) CobaltBlue.copy(alpha = 0.12f) else PageGround)
+                                .background(if (isDone) CobaltBlue.copy(alpha = 0.12f) else WellBrush)
                                 .border(
                                     1.dp,
-                                    if (isDone) CobaltBlue.copy(alpha = 0.3f) else Hairline,
+                                    if (isDone) CobaltBlue.copy(alpha = 0.3f) else ReverseBevel,
                                     RoundedCornerShape(10.dp)
                                 ),
                             contentAlignment = Alignment.Center

@@ -43,39 +43,98 @@ struct WeekStripView: View {
                         Text(dayLabels[weekdayIndex])
                             .font(.hostGrotesk(isSelected ? .semibold : .medium, size: 12))
                             .foregroundStyle(isSelected ? Color.cobaltBlue : Color.mutedText)
+                            .letterpress(isLight: false)
 
                         ZStack {
-                            Circle()
-                                .fill(isSelected ? Color.cobaltBlue : Color.clear)
-                                .frame(width: 32, height: 32)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(
-                                            isSelected
-                                                ? Color.clear
-                                                : (isToday ? Color.cobaltBlue.opacity(0.5) : Color.hairline),
-                                            lineWidth: 1
-                                        )
-                                )
+                            if isSelected {
+                                // Raised convex cobalt enamel button
+                                Circle()
+                                    .fill(LinearGradient.cobaltEnamel)
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        VStack {
+                                            LinearGradient(colors: [Color.white.opacity(0.60), Color.clear], startPoint: .top, endPoint: .bottom)
+                                                .frame(height: 10)
+                                            Spacer()
+                                        }
+                                        .clipShape(Circle())
+                                    )
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(
+                                                LinearGradient(colors: [Color.white.opacity(0.70), Color.black.opacity(0.30)], startPoint: .top, endPoint: .bottom),
+                                                lineWidth: 1
+                                            )
+                                    )
+                                    .shadow(color: Color.cobaltBlue.opacity(0.40), radius: 4, x: 0, y: 2)
 
-                            Text("\(dayNumber)")
-                                .font(.hostGrotesk(.medium, size: 13))
-                                .monospacedDigit()
-                                .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
+                                Text("\(dayNumber)")
+                                    .font(.hostGrotesk(.semibold, size: 13))
+                                    .monospacedDigit()
+                                    .foregroundStyle(Color.cobaltLabel)
+                                    .letterpress(isLight: true)
+                            } else {
+                                // Tactile circular recessed dimple
+                                Circle()
+                                    .fill(LinearGradient.wellGradient)
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        VStack(spacing: 0) {
+                                            LinearGradient(colors: [Color.black.opacity(0.20), Color.clear], startPoint: .top, endPoint: .bottom)
+                                                .frame(height: 3)
+                                            Spacer()
+                                            Color.white.opacity(0.80)
+                                                .frame(height: 1)
+                                        }
+                                        .clipShape(Circle())
+                                    )
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(
+                                                isToday
+                                                    ? LinearGradient(colors: [Color.cobaltBlue.opacity(0.6), Color.cobaltBlue.opacity(0.2)], startPoint: .top, endPoint: .bottom)
+                                                    : LinearGradient.reverseBevel,
+                                                lineWidth: 1
+                                            )
+                                    )
+
+                                Text("\(dayNumber)")
+                                    .font(.hostGrotesk(.medium, size: 13))
+                                    .monospacedDigit()
+                                    .foregroundStyle(isToday ? Color.cobaltBlue : Color.primaryText)
+                                    .letterpress(isLight: false)
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: 68)
+                    .frame(height: 70)
                     .background(
-                        RoundedRectangle(cornerRadius: 22)
-                            .fill(isSelected ? Color.cardSurface : Color.clear)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 22)
-                            .strokeBorder(isSelected ? Color.cobaltBlue : Color.clear, lineWidth: 1.5)
+                        Group {
+                            if isSelected {
+                                // Raised beveled vertical pill tab
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(LinearGradient.cardGradient)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .strokeBorder(LinearGradient.topLightBevel, lineWidth: 1.2)
+                                    )
+                                    .overlay(
+                                        VStack {
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .strokeBorder(Color.white.opacity(0.70), lineWidth: 1)
+                                                .frame(height: 12)
+                                                .mask(VStack { Rectangle().frame(height: 2); Spacer() })
+                                            Spacer()
+                                        }
+                                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                                    )
+                                    .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1.5)
+                                    .shadow(color: Color(red: 0x36 / 255.0, green: 0x30 / 255.0, blue: 0x24 / 255.0).opacity(0.12), radius: 7, x: 0, y: 3.5)
+                            }
+                        }
                     )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SkeuomorphicButtonStyle())
             }
         }
         .padding(.horizontal, 16)

@@ -61,13 +61,14 @@ struct SettingsView: View {
                 Text("Settings")
                     .font(.hostGrotesk(.medium, size: 22))
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
                 Spacer()
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, 8)
 
-            HairlineDivider()
+            EngravedDivider()
 
             ScrollView {
                 VStack(spacing: 16) {
@@ -88,7 +89,7 @@ struct SettingsView: View {
                 .padding(.bottom, 96) // Floating nav bar padding
             }
         }
-        .background(Color.pageGround)
+        .paperBackground()
         .onAppear {
             displayName = syncService.displayName
             supabaseURL = syncService.supabaseURL
@@ -131,15 +132,29 @@ struct SettingsView: View {
     // MARK: - 1. Profile Header Card
     private var profileHeaderCard: some View {
         HStack(spacing: 14) {
-            // Circular Avatar Initials
-            Circle()
-                .fill(Color.cobaltBlue)
-                .frame(width: 50, height: 50)
-                .overlay(
-                    Text(initials(from: syncService.displayName))
-                        .font(.hostGrotesk(.semibold, size: 18))
-                        .foregroundStyle(Color.cobaltLabel)
-                )
+            // Circular Avatar Initials with Specular Metallic Bezel
+            ZStack {
+                Circle()
+                    .fill(LinearGradient.cobaltEnamel)
+                    .frame(width: 52, height: 52)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.8), Color.black.opacity(0.35)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 1.5
+                            )
+                    )
+                    .shadow(color: Color.cobaltBlue.opacity(0.35), radius: 3, x: 0, y: 1.5)
+
+                Text(initials(from: syncService.displayName))
+                    .font(.hostGrotesk(.bold, size: 18))
+                    .foregroundStyle(Color.cobaltLabel)
+                    .letterpress(isLight: true)
+            }
 
             VStack(alignment: .leading, spacing: 3) {
                 if isEditingName {
@@ -160,6 +175,7 @@ struct SettingsView: View {
                         Text(syncService.displayName)
                             .font(.hostGrotesk(.semibold, size: 16))
                             .foregroundStyle(Color.primaryText)
+                            .letterpress(isLight: false)
 
                         Button {
                             isEditingName = true
@@ -175,11 +191,13 @@ struct SettingsView: View {
                     .font(.hostGrotesk(.regular, size: 12))
                     .monospacedDigit()
                     .foregroundStyle(Color.mutedText)
+                    .letterpress(isLight: false)
 
                 if let email = syncService.currentUserEmail {
                     Text(email)
                         .font(.hostGrotesk(.regular, size: 11))
                         .foregroundStyle(Color.mutedText)
+                        .letterpress(isLight: false)
                 }
             }
 
@@ -195,18 +213,18 @@ struct SettingsView: View {
                 }
                 .font(.hostGrotesk(.medium, size: 12))
                 .foregroundStyle(Color.cobaltBlue)
+                .letterpress(isLight: false)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color.pageGround)
+                .background(Capsule().fill(LinearGradient.cardGradient))
                 .clipShape(Capsule())
-                .overlay(Capsule().stroke(Color.hairline, lineWidth: 1))
+                .overlay(Capsule().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SkeuomorphicButtonStyle())
         }
         .padding(14)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 16)
     }
 
     // MARK: - 2. Daily Mood Strip Card
@@ -219,12 +237,14 @@ struct SettingsView: View {
                 Text("Daily Moods")
                     .font(.hostGrotesk(.semibold, size: 14))
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
 
                 Spacer()
 
                 Text("Tap day to log")
                     .font(.hostGrotesk(.regular, size: 11))
                     .foregroundStyle(Color.mutedText)
+                    .letterpress(isLight: false)
             }
 
             HStack(spacing: 8) {
@@ -239,39 +259,39 @@ struct SettingsView: View {
                             Text(weekdays[index])
                                 .font(.hostGrotesk(.medium, size: 11))
                                 .foregroundStyle(Color.mutedText)
+                                .letterpress(isLight: false)
 
                             ZStack {
-                                Circle()
-                                    .fill(currentMood != nil ? Color.cobaltBlue.opacity(0.12) : Color.pageGround)
-                                    .frame(width: 34, height: 34)
-                                    .overlay(
-                                        Circle()
-                                            .strokeBorder(
-                                                currentMood != nil ? Color.cobaltBlue.opacity(0.4) : Color.hairline,
-                                                style: StrokeStyle(lineWidth: 1, dash: currentMood != nil ? [] : [3, 2])
-                                            )
-                                    )
-
                                 if let mood = currentMood {
+                                    Circle()
+                                        .fill(LinearGradient.cardGradient)
+                                        .frame(width: 36, height: 36)
+                                        .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
+                                        .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
+
                                     Text(mood)
-                                        .font(.system(size: 16))
+                                        .font(.system(size: 17))
                                 } else {
+                                    Circle()
+                                        .fill(LinearGradient.wellGradient)
+                                        .frame(width: 36, height: 36)
+                                        .overlay(Circle().strokeBorder(LinearGradient.reverseBevel, lineWidth: 1))
+                                        .shadow(color: Color.black.opacity(0.06), radius: 1, x: 0, y: 1)
+
                                     Image(systemName: "plus")
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(Color.mutedText)
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundStyle(Color.mutedText.opacity(0.7))
                                 }
                             }
                         }
                         .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SkeuomorphicButtonStyle())
                 }
             }
         }
         .padding(14)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 16)
     }
 
     // MARK: - 3. Settings Card
@@ -281,25 +301,25 @@ struct SettingsView: View {
                 showHabitManager = true
             }
 
-            HairlineDivider().padding(.horizontal, 14)
+            EngravedDivider().padding(.horizontal, 14)
 
             chevronRow(title: "Preferences", subtitle: "\(weekStartDay) start", icon: "gearshape") {
                 showPreferencesSheet = true
             }
 
-            HairlineDivider().padding(.horizontal, 14)
+            EngravedDivider().padding(.horizontal, 14)
 
             chevronRow(title: "Friends Sync (Supabase)", subtitle: syncService.isConfigured ? "Connected" : "Offline", icon: "arrow.triangle.2.circlepath") {
                 showSupabaseSheet = true
             }
 
-            HairlineDivider().padding(.horizontal, 14)
+            EngravedDivider().padding(.horizontal, 14)
 
             chevronRow(title: "Data & Backup", subtitle: "JSON / CSV / Reset", icon: "externaldrive") {
                 showDataBackupSheet = true
             }
 
-            HairlineDivider().padding(.horizontal, 14)
+            EngravedDivider().padding(.horizontal, 14)
 
             chevronRow(title: "Sign Out", subtitle: syncService.currentUserEmail ?? "Account", icon: "rectangle.portrait.and.arrow.right") {
                 Task {
@@ -307,9 +327,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 16)
     }
 
     private func chevronRow(title: String, subtitle: String? = nil, icon: String, action: @escaping () -> Void) -> some View {
@@ -319,9 +337,10 @@ struct SettingsView: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(Color.pageGround)
+                        .fill(LinearGradient.wellGradient)
                         .frame(width: 32, height: 32)
-                        .overlay(Circle().stroke(Color.hairline, lineWidth: 1))
+                        .overlay(Circle().strokeBorder(LinearGradient.reverseBevel, lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.06), radius: 1, x: 0, y: 1)
 
                     Image(systemName: icon)
                         .font(.system(size: 13, weight: .medium))
@@ -331,6 +350,7 @@ struct SettingsView: View {
                 Text(title)
                     .font(.hostGrotesk(.medium, size: 15))
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
 
                 Spacer()
 
@@ -338,16 +358,17 @@ struct SettingsView: View {
                     Text(subtitle)
                         .font(.hostGrotesk(.regular, size: 13))
                         .foregroundStyle(Color.mutedText)
+                        .letterpress(isLight: false)
                 }
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color.mutedText)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 13)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SkeuomorphicButtonStyle())
     }
 
     // MARK: - 4. About Card
@@ -357,6 +378,7 @@ struct SettingsView: View {
                 Text("About HabitTracker")
                     .font(.hostGrotesk(.semibold, size: 14))
                     .foregroundStyle(Color.primaryText)
+                    .letterpress(isLight: false)
 
                 Spacer()
 
@@ -364,19 +386,19 @@ struct SettingsView: View {
                     .font(.hostGrotesk(.medium, size: 12))
                     .monospacedDigit()
                     .foregroundStyle(Color.secondaryText)
+                    .letterpress(isLight: false)
             }
 
-            HairlineDivider()
+            EngravedDivider()
 
             Text("100% On-Device & Private. Built with SwiftUI, SwiftData, and zero-cost cloud sync. Habit names, notes, and personal metadata never leave your local device.")
                 .font(.hostGrotesk(.regular, size: 12))
                 .foregroundStyle(Color.mutedText)
+                .letterpress(isLight: false)
                 .lineSpacing(3)
         }
         .padding(14)
-        .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+        .skeuomorphicCard(cornerRadius: 16)
     }
 
     // MARK: ==========================================
