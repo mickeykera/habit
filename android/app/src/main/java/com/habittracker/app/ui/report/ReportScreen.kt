@@ -83,7 +83,7 @@ fun ReportScreen(habitDao: HabitDao) {
                         Text(d, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MutedText)
                     }
                 }
-                Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.End) {
+                Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.CenterEnd) {
                     Text("Total", fontSize = 11.sp, color = MutedText)
                 }
             }
@@ -120,7 +120,7 @@ fun ReportScreen(habitDao: HabitDao) {
                         }
                     }
 
-                    Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.End) {
+                    Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.CenterEnd) {
                         Text(
                             text = "100%",
                             fontSize = 12.sp,
@@ -155,7 +155,7 @@ fun ReportScreen(habitDao: HabitDao) {
                         )
                     }
                 }
-                Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.End) {
+                Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.CenterEnd) {
                     Text(
                         text = "86%",
                         fontSize = 12.sp,
