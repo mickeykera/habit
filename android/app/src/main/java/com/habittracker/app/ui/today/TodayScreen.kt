@@ -54,7 +54,6 @@ import com.habittracker.app.theme.CobaltLabel
 import com.habittracker.app.theme.Hairline
 import com.habittracker.app.theme.MutedText
 import com.habittracker.app.theme.PageGround
-import com.habittracker.app.theme.PaperLight
 import com.habittracker.app.theme.PrimaryText
 import com.habittracker.app.theme.ReverseBevel
 import com.habittracker.app.theme.SecondaryText
