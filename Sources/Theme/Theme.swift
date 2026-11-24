@@ -39,6 +39,30 @@ extension Color {
 
     static let charcoalLight = Color(red: 0x2A / 255.0, green: 0x29 / 255.0, blue: 0x2B / 255.0)
     static let charcoalDark = Color(red: 0x14 / 255.0, green: 0x13 / 255.0, blue: 0x14 / 255.0)
+
+    init(hex: String) {
+        let clean = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: clean).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch clean.count {
+        case 3:
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6:
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8:
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
 }
 
 // MARK: - Skeuomorphic Tactile Gradients

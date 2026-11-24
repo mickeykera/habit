@@ -150,7 +150,7 @@ struct SettingsView: View {
 
                 HStack(spacing: 5) {
                     Circle()
-                        .fill(Color(hex: "10B981"))
+                        .fill(Color(red: 0x10 / 255.0, green: 0xB9 / 255.0, blue: 0x81 / 255.0))
                         .frame(width: 7, height: 7)
                     Text("Synced")
                         .font(.hostGrotesk(.medium, size: 11))
