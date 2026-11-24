@@ -196,8 +196,17 @@ fun CalendarScreen(
                 modifier = Modifier
                     .shadow(if (isAllSelected) 3.dp else 1.dp, RoundedCornerShape(16.dp))
                     .clip(RoundedCornerShape(16.dp))
-                    .background(if (isAllSelected) CobaltEnamelBrush else CardBrush)
-                    .border(1.dp, if (isAllSelected) Color.White.copy(alpha = 0.6f) else TopLightBevel, RoundedCornerShape(16.dp))
+                    .then(
+                        if (isAllSelected) {
+                            Modifier
+                                .background(CobaltEnamelBrush)
+                                .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                        } else {
+                            Modifier
+                                .background(CardBrush)
+                                .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
+                        }
+                    )
                     .clickable { selectedHabitId = null }
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
@@ -216,8 +225,17 @@ fun CalendarScreen(
                     modifier = Modifier
                         .shadow(if (isSel) 3.dp else 1.dp, RoundedCornerShape(16.dp))
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSel) CobaltEnamelBrush else CardBrush)
-                        .border(1.dp, if (isSel) Color.White.copy(alpha = 0.6f) else TopLightBevel, RoundedCornerShape(16.dp))
+                        .then(
+                            if (isSel) {
+                                Modifier
+                                    .background(CobaltEnamelBrush)
+                                    .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                            } else {
+                                Modifier
+                                    .background(CardBrush)
+                                    .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
+                            }
+                        )
                         .clickable { selectedHabitId = habit.id }
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center

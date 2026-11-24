@@ -246,11 +246,16 @@ fun TodayScreen(
                             .fillMaxWidth()
                             .shadow(if (isDone) 1.dp else 2.dp, RoundedCornerShape(14.dp))
                             .clip(RoundedCornerShape(14.dp))
-                            .background(if (isDone) CobaltBlue.copy(alpha = 0.08f) else CardBrush)
-                            .border(
-                                1.dp,
-                                if (isDone) CobaltBlue else TopLightBevel,
-                                RoundedCornerShape(14.dp)
+                            .then(
+                                if (isDone) {
+                                    Modifier
+                                        .background(CobaltBlue.copy(alpha = 0.08f))
+                                        .border(1.dp, CobaltBlue, RoundedCornerShape(14.dp))
+                                } else {
+                                    Modifier
+                                        .background(CardBrush)
+                                        .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
+                                }
                             )
                             .clickable {
                                 scope.launch {
@@ -272,11 +277,16 @@ fun TodayScreen(
                             modifier = Modifier
                                 .size(38.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isDone) CobaltBlue.copy(alpha = 0.12f) else WellBrush)
-                                .border(
-                                    1.dp,
-                                    if (isDone) CobaltBlue.copy(alpha = 0.3f) else ReverseBevel,
-                                    RoundedCornerShape(10.dp)
+                                .then(
+                                    if (isDone) {
+                                        Modifier
+                                            .background(CobaltBlue.copy(alpha = 0.12f))
+                                            .border(1.dp, CobaltBlue.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    } else {
+                                        Modifier
+                                            .background(WellBrush)
+                                            .border(1.dp, ReverseBevel, RoundedCornerShape(10.dp))
+                                    }
                                 ),
                             contentAlignment = Alignment.Center
                         ) {

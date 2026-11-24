@@ -104,11 +104,16 @@ fun ReportScreen(habitDao: HabitDao) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .shadow(if (isSelected) 2.dp else 0.dp, RoundedCornerShape(8.dp))
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) CobaltEnamelBrush else Color.Transparent)
                         .then(
-                            if (isSelected) Modifier.border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(8.dp)) else Modifier
+                            if (isSelected) {
+                                Modifier
+                                    .shadow(2.dp, RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(CobaltEnamelBrush)
+                                    .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                            } else {
+                                Modifier.clip(RoundedCornerShape(8.dp))
+                            }
                         )
                         .clickable { selectedTab = tab }
                         .padding(vertical = 8.dp),

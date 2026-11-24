@@ -202,11 +202,16 @@ fun FriendsScreen(syncService: SupabaseSyncService) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .shadow(if (isSel) 2.dp else 0.dp, RoundedCornerShape(8.dp))
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSel) CobaltEnamelBrush else Color.Transparent)
                         .then(
-                            if (isSel) Modifier.border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(8.dp)) else Modifier
+                            if (isSel) {
+                                Modifier
+                                    .shadow(2.dp, RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(CobaltEnamelBrush)
+                                    .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                            } else {
+                                Modifier.clip(RoundedCornerShape(8.dp))
+                            }
                         )
                         .clickable { timeframe = tf }
                         .padding(vertical = 7.dp),

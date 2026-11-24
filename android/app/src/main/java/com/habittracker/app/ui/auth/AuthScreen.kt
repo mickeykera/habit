@@ -139,11 +139,16 @@ fun AuthScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .shadow(if (!isSignUp) 2.dp else 0.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(if (!isSignUp) CobaltEnamelBrush else Color.Transparent)
                     .then(
-                        if (!isSignUp) Modifier.border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape) else Modifier
+                        if (!isSignUp) {
+                            Modifier
+                                .shadow(2.dp, CircleShape)
+                                .clip(CircleShape)
+                                .background(CobaltEnamelBrush)
+                                .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                        } else {
+                            Modifier.clip(CircleShape)
+                        }
                     )
                     .clickable {
                         isSignUp = false
@@ -163,11 +168,16 @@ fun AuthScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .shadow(if (isSignUp) 2.dp else 0.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(if (isSignUp) CobaltEnamelBrush else Color.Transparent)
                     .then(
-                        if (isSignUp) Modifier.border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape) else Modifier
+                        if (isSignUp) {
+                            Modifier
+                                .shadow(2.dp, CircleShape)
+                                .clip(CircleShape)
+                                .background(CobaltEnamelBrush)
+                                .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                        } else {
+                            Modifier.clip(CircleShape)
+                        }
                     )
                     .clickable {
                         isSignUp = true
