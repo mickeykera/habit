@@ -32,44 +32,61 @@ struct AddHabitSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: 20) {
                     // Title field
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Habit Name")
                             .font(.hostGrotesk(.medium, size: 13))
                             .foregroundStyle(Color.mutedText)
-                            .letterpress(isLight: false)
 
                         TextField("e.g., Read 20 minutes", text: $title)
                             .font(.hostGrotesk(.regular, size: 16))
-                            .padding(12)
-                            .skeuomorphicWell(cornerRadius: 10)
+                            .padding(14)
+                            .background(Color.cardSurface)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.hairline, lineWidth: 1))
                     }
-
-                    EngravedDivider()
 
                     // Type picker
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Type")
                             .font(.hostGrotesk(.medium, size: 13))
                             .foregroundStyle(Color.mutedText)
-                            .letterpress(isLight: false)
 
-                        Picker("Type", selection: $habitType) {
-                            Text("Build").tag(HabitType.build)
-                            Text("Quit").tag(HabitType.quit)
+                        HStack(spacing: 8) {
+                            Button {
+                                habitType = .build
+                            } label: {
+                                Text("Build")
+                                    .font(.hostGrotesk(.medium, size: 14))
+                                    .foregroundStyle(habitType == .build ? Color.cobaltLabel : Color.primaryText)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(habitType == .build ? Color.cobaltBlue : Color.cardSurface)
+                                    .clipShape(Capsule())
+                            }
+                            .buttonStyle(AppPillButtonStyle())
+
+                            Button {
+                                habitType = .quit
+                            } label: {
+                                Text("Quit")
+                                    .font(.hostGrotesk(.medium, size: 14))
+                                    .foregroundStyle(habitType == .quit ? Color.cobaltLabel : Color.primaryText)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(habitType == .quit ? Color.cobaltBlue : Color.cardSurface)
+                                    .clipShape(Capsule())
+                            }
+                            .buttonStyle(AppPillButtonStyle())
                         }
-                        .pickerStyle(.segmented)
                     }
-
-                    EngravedDivider()
 
                     // Schedule
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Schedule")
                             .font(.hostGrotesk(.medium, size: 13))
                             .foregroundStyle(Color.mutedText)
-                            .letterpress(isLight: false)
 
                         Toggle("Every day", isOn: $isDaily)
                             .font(.hostGrotesk(.regular, size: 16))
@@ -90,27 +107,16 @@ struct AddHabitSheet: View {
                                             .font(.hostGrotesk(.medium, size: 13))
                                             .frame(width: 36, height: 36)
                                             .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
-                                            .letterpress(isLight: isSelected)
                                             .background(
                                                 Circle()
-                                                    .fill(isSelected ? LinearGradient.cobaltEnamel : LinearGradient.wellGradient)
+                                                    .fill(isSelected ? Color.cobaltBlue : Color.cardSurface)
                                             )
-                                            .overlay(
-                                                Circle()
-                                                    .strokeBorder(
-                                                        isSelected ? LinearGradient(colors: [Color.white.opacity(0.6), Color.black.opacity(0.2)], startPoint: .top, endPoint: .bottom) : LinearGradient.reverseBevel,
-                                                        lineWidth: 1
-                                                    )
-                                            )
-                                            .shadow(color: isSelected ? Color.cobaltBlue.opacity(0.3) : Color.black.opacity(0.04), radius: isSelected ? 2 : 1, x: 0, y: 1)
                                     }
-                                    .buttonStyle(SkeuomorphicButtonStyle())
+                                    .buttonStyle(AppPillButtonStyle())
                                 }
                             }
                         }
                     }
-
-                    EngravedDivider()
 
                     // Reminder
                     VStack(alignment: .leading, spacing: 8) {
@@ -128,8 +134,6 @@ struct AddHabitSheet: View {
                         }
                     }
 
-                    EngravedDivider()
-
                     // Save button
                     Button {
                         save()
@@ -137,12 +141,12 @@ struct AddHabitSheet: View {
                         Text(isEditing ? "Update Habit" : "Add Habit")
                             .font(.hostGrotesk(.semibold, size: 16))
                             .foregroundStyle(Color.cobaltLabel)
-                            .letterpress(isLight: true)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .skeuomorphicCobaltButton(cornerRadius: 12)
+                            .background(Color.cobaltBlue)
+                            .clipShape(Capsule())
                     }
-                    .buttonStyle(SkeuomorphicButtonStyle())
+                    .buttonStyle(AppPillButtonStyle())
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
 
                     // Edit-mode actions
@@ -155,10 +159,11 @@ struct AddHabitSheet: View {
                                     .font(.hostGrotesk(.medium, size: 16))
                                     .foregroundStyle(Color.secondaryText)
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .skeuomorphicCard(cornerRadius: 12)
+                                    .padding(.vertical, 12)
+                                    .background(Color.cardSurface)
+                                    .clipShape(Capsule())
                             }
-                            .buttonStyle(SkeuomorphicButtonStyle())
+                            .buttonStyle(AppPillButtonStyle())
 
                             Button(role: .destructive) {
                                 showDeleteConfirmation = true
@@ -167,17 +172,18 @@ struct AddHabitSheet: View {
                                     .font(.hostGrotesk(.medium, size: 16))
                                     .foregroundStyle(.red)
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .skeuomorphicCard(cornerRadius: 12)
+                                    .padding(.vertical, 12)
+                                    .background(Color.cardSurface)
+                                    .clipShape(Capsule())
                             }
-                            .buttonStyle(SkeuomorphicButtonStyle())
+                            .buttonStyle(AppPillButtonStyle())
                         }
                         .padding(.top, 8)
                     }
                 }
                 .padding(16)
             }
-            .paperBackground()
+            .background(Color.pageGround.ignoresSafeArea())
             .navigationTitle(isEditing ? "Edit Habit" : "New Habit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -274,7 +280,6 @@ struct AddHabitSheet: View {
             let hour = calendar.component(.hour, from: time)
             let minute = calendar.component(.minute, from: time)
 
-            // Remove old notifications for this habit
             let habitId = existingHabit?.id.uuidString ?? UUID().uuidString
             center.removePendingNotificationRequests(withIdentifiers:
                 (0..<7).map { "\(habitId)-\($0)" }
@@ -284,7 +289,6 @@ struct AddHabitSheet: View {
 
             for day in daysToSchedule {
                 var dateComponents = DateComponents()
-                // Convert 0=Sun..6=Sat to Calendar weekday 1=Sun..7=Sat
                 dateComponents.weekday = day + 1
                 dateComponents.hour = hour
                 dateComponents.minute = minute

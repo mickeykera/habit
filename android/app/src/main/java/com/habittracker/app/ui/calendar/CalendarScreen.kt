@@ -66,7 +66,6 @@ import com.habittracker.app.theme.ReverseBevel
 import com.habittracker.app.theme.SecondaryText
 import com.habittracker.app.theme.TopLightBevel
 import com.habittracker.app.theme.WellBrush
-import com.habittracker.app.ui.components.EngravedDivider
 import com.habittracker.app.ui.components.HairlineDivider
 import java.time.LocalDate
 import java.time.YearMonth
@@ -121,10 +120,9 @@ fun CalendarScreen(
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .shadow(2.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(CardBrush)
-                    .border(1.dp, TopLightBevel, CircleShape)
+                    .background(CardSurface)
+                    .border(1.dp, Hairline, CircleShape)
                     .clickable { showScopeMenu = true },
                 contentAlignment = Alignment.Center
             ) {
@@ -148,12 +146,11 @@ fun CalendarScreen(
             Box {
                 Row(
                     modifier = Modifier
-                        .shadow(2.dp, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(CardBrush)
-                        .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
+                        .clip(CircleShape)
+                        .background(CardSurface)
+                        .border(1.dp, Hairline, CircleShape)
                         .clickable { showScopeMenu = true }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -171,10 +168,9 @@ fun CalendarScreen(
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .shadow(2.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(CardBrush)
-                    .border(1.dp, TopLightBevel, CircleShape)
+                    .background(CardSurface)
+                    .border(1.dp, Hairline, CircleShape)
                     .clickable { onOpenAdd() },
                 contentAlignment = Alignment.Center
             ) {
@@ -194,21 +190,18 @@ fun CalendarScreen(
             val isAllSelected = selectedHabitId == null
             Box(
                 modifier = Modifier
-                    .shadow(if (isAllSelected) 3.dp else 1.dp, RoundedCornerShape(16.dp))
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(CircleShape)
                     .then(
                         if (isAllSelected) {
-                            Modifier
-                                .background(CobaltEnamelBrush)
-                                .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                            Modifier.background(CobaltBlue)
                         } else {
                             Modifier
-                                .background(CardBrush)
-                                .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
+                                .background(CardSurface)
+                                .border(1.dp, Hairline, CircleShape)
                         }
                     )
                     .clickable { selectedHabitId = null }
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -223,21 +216,18 @@ fun CalendarScreen(
                 val isSel = selectedHabitId == habit.id
                 Box(
                     modifier = Modifier
-                        .shadow(if (isSel) 3.dp else 1.dp, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(CircleShape)
                         .then(
                             if (isSel) {
-                                Modifier
-                                    .background(CobaltEnamelBrush)
-                                    .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                                Modifier.background(CobaltBlue)
                             } else {
                                 Modifier
-                                    .background(CardBrush)
-                                    .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
+                                    .background(CardSurface)
+                                    .border(1.dp, Hairline, CircleShape)
                             }
                         )
                         .clickable { selectedHabitId = habit.id }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -256,10 +246,8 @@ fun CalendarScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(3.dp, RoundedCornerShape(14.dp))
-                .clip(RoundedCornerShape(14.dp))
-                .background(CardBrush)
-                .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(8.dp))
+                .background(CardSurface)
                 .padding(14.dp)
         ) {
             Row(
@@ -290,7 +278,7 @@ fun CalendarScreen(
                 }
             }
 
-            EngravedDivider(modifier = Modifier.padding(vertical = 4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             val totalCells = leadingEmptyDays + daysInMonth
             val rows = (totalCells + 6) / 7
@@ -355,10 +343,8 @@ fun CalendarScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(3.dp, RoundedCornerShape(14.dp))
-                .clip(RoundedCornerShape(14.dp))
-                .background(CardBrush)
-                .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(8.dp))
+                .background(CardSurface)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -373,7 +359,7 @@ fun CalendarScreen(
                         style = Stroke(width = 8.dp.toPx())
                     )
                     drawArc(
-                        brush = CobaltEnamelBrush,
+                        color = CobaltBlue,
                         startAngle = -90f,
                         sweepAngle = 0.84f * 360f,
                         useCenter = false,
@@ -384,10 +370,8 @@ fun CalendarScreen(
                 Box(
                     modifier = Modifier
                         .size(80.dp)
-                        .shadow(2.dp, CircleShape)
                         .clip(CircleShape)
-                        .background(CardBrush)
-                        .border(1.dp, TopLightBevel, CircleShape),
+                        .background(Color.White),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -412,12 +396,11 @@ fun CalendarScreen(
             // ⇄ Toggle Button
             Row(
                 modifier = Modifier
-                    .shadow(1.dp, RoundedCornerShape(12.dp))
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(CardBrush)
-                    .border(1.dp, TopLightBevel, RoundedCornerShape(12.dp))
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(1.dp, Hairline, CircleShape)
                     .clickable { isShowingOverallRate = !isShowingOverallRate }
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Default.SwapHoriz, contentDescription = null, tint = SecondaryText, modifier = Modifier.size(14.dp))
@@ -429,7 +412,7 @@ fun CalendarScreen(
                 )
             }
 
-            EngravedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // 2x2 KPI Grid
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -449,10 +432,8 @@ fun CalendarScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(3.dp, RoundedCornerShape(14.dp))
-                .clip(RoundedCornerShape(14.dp))
-                .background(CardBrush)
-                .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(8.dp))
+                .background(CardSurface)
                 .padding(14.dp)
         ) {
             Row(
@@ -463,7 +444,7 @@ fun CalendarScreen(
                 Text("Done Today", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = PrimaryText)
                 Text("More >", fontSize = 12.sp, color = MutedText)
             }
-            EngravedDivider(modifier = Modifier.padding(vertical = 8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "${selectedDay.month.name.take(3)} ${selectedDay.dayOfMonth}: All habits on track",
                 fontSize = 13.sp,
@@ -477,10 +458,8 @@ fun CalendarScreen(
 private fun KpiCard(modifier: Modifier = Modifier, title: String, value: String) {
     Box(
         modifier = modifier
-            .shadow(1.dp, RoundedCornerShape(10.dp))
-            .clip(RoundedCornerShape(10.dp))
-            .background(CardBrush)
-            .border(1.dp, TopLightBevel, RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White)
             .padding(10.dp)
     ) {
         Column {

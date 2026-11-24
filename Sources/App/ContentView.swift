@@ -35,11 +35,8 @@ struct ContentView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            ZStack {
-                LinearGradient.paperGroundGradient
-                    .ignoresSafeArea()
-                PaperGrainView()
-            }
+            Color.pageGround
+                .ignoresSafeArea()
 
             ZStack {
                 TodayView()
@@ -62,12 +59,12 @@ struct ContentView: View {
                     .opacity(selectedTab == .settings ? 1 : 0)
                     .allowsHitTesting(selectedTab == .settings)
             }
-            .animation(.easeInOut(duration: 0.22), value: selectedTab)
+            .animation(.snappySpring, value: selectedTab)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Skeuomorphic Floating Dock
+            // Floating Pill Bottom Navigation Bar
             floatingNavigationBar
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 24)
                 .padding(.bottom, 12)
         }
         .sheet(isPresented: $showAddHabitSheet) {
@@ -81,44 +78,21 @@ struct ContentView: View {
                 let isSelected = selectedTab == tab
 
                 if tab == .today && selectedTab == .today {
-                    // Smart `+` Shortcut: Convex Cobalt Enamel Push-Button
+                    // Smart `+` Shortcut: Solid Royal Blue circular button to open AddHabitSheet
                     Button {
                         showAddHabitSheet = true
                     } label: {
                         ZStack {
                             Circle()
-                                .fill(LinearGradient.cobaltEnamel)
+                                .fill(Color.cobaltBlue)
                                 .frame(width: 44, height: 44)
-                                .overlay(
-                                    // Top specular crescent highlight
-                                    VStack {
-                                        LinearGradient(colors: [Color.white.opacity(0.65), Color.clear], startPoint: .top, endPoint: .bottom)
-                                            .frame(height: 14)
-                                        Spacer()
-                                    }
-                                    .clipShape(Circle())
-                                )
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(
-                                            LinearGradient(
-                                                colors: [Color.white.opacity(0.70), Color.black.opacity(0.30)],
-                                                startPoint: .top,
-                                                endPoint: .bottom
-                                            ),
-                                            lineWidth: 1.5
-                                        )
-                                )
-                                .shadow(color: Color.black.opacity(0.25), radius: 2.5, x: 0, y: 1.5)
-                                .shadow(color: Color.cobaltBlue.opacity(0.50), radius: 8, x: 0, y: 3)
 
                             Image(systemName: "plus")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 20, weight: .semibold))
                                 .foregroundStyle(Color.cobaltLabel)
-                                .letterpress(isLight: true)
                         }
                     }
-                    .buttonStyle(SkeuomorphicButtonStyle())
+                    .buttonStyle(AppPillButtonStyle())
                     .frame(maxWidth: .infinity)
                 } else {
                     Button {
@@ -128,89 +102,32 @@ struct ContentView: View {
                     } label: {
                         ZStack {
                             if isSelected {
-                                // Recessed / debossed well with inner shadow & bottom highlight
                                 Capsule()
-                                    .fill(LinearGradient.wellGradient)
-                                    .frame(height: 40)
-                                    .overlay(
-                                        VStack(spacing: 0) {
-                                            LinearGradient(colors: [Color.black.opacity(0.20), Color.clear], startPoint: .top, endPoint: .bottom)
-                                                .frame(height: 3)
-                                            Spacer()
-                                            Color.white.opacity(0.85)
-                                                .frame(height: 1)
-                                        }
-                                        .clipShape(Capsule())
-                                    )
-                                    .overlay(
-                                        Capsule()
-                                            .strokeBorder(LinearGradient.reverseBevel, lineWidth: 1)
-                                    )
+                                    .fill(Color.cobaltBlue.opacity(0.12))
+                                    .frame(height: 38)
                             }
 
-                            VStack(spacing: 2) {
-                                Image(systemName: tab.icon)
-                                    .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
-                                    .foregroundStyle(
-                                        isSelected ? Color.cobaltBlue : Color.secondaryText
-                                    )
-                                    .shadow(
-                                        color: isSelected ? Color.cobaltBlue.opacity(0.60) : Color.white.opacity(0.8),
-                                        radius: isSelected ? 3 : 0.5,
-                                        x: 0,
-                                        y: isSelected ? 1 : 0.75
-                                    )
-
-                                if isSelected {
-                                    // Tiny glowing cobalt indicator dot
-                                    Circle()
-                                        .fill(Color.cobaltBlue)
-                                        .frame(width: 3.5, height: 3.5)
-                                        .shadow(color: Color.cobaltBlue.opacity(0.9), radius: 3, x: 0, y: 0)
-                                } else {
-                                    Circle()
-                                        .fill(Color.clear)
-                                        .frame(width: 3.5, height: 3.5)
-                                }
-                            }
-                            .frame(width: 44, height: 40)
+                            Image(systemName: tab.icon)
+                                .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
+                                .foregroundStyle(
+                                    isSelected ? Color.cobaltBlue : Color.secondaryText
+                                )
+                                .frame(width: 44, height: 38)
                         }
                     }
-                    .buttonStyle(SkeuomorphicButtonStyle())
+                    .buttonStyle(AppPillButtonStyle())
                     .frame(maxWidth: .infinity)
                 }
             }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        // Raised physical dock (matte ceramic/brushed aluminum look)
-        .background(
-            Capsule()
-                .fill(LinearGradient.cardGradient)
-        )
+        .background(Color.cardSurface)
         .clipShape(Capsule())
         .overlay(
             Capsule()
-                .strokeBorder(LinearGradient.topLightBevel, lineWidth: 1.5)
+                .stroke(Color.hairline, lineWidth: 1)
         )
-        .overlay(
-            VStack {
-                Capsule()
-                    .strokeBorder(Color.white.opacity(0.75), lineWidth: 1)
-                    .frame(height: 14)
-                    .mask(
-                        VStack {
-                            Rectangle().frame(height: 2)
-                            Spacer()
-                        }
-                    )
-                Spacer()
-            }
-            .clipShape(Capsule())
-            .allowsHitTesting(false)
-        )
-        .shadow(color: Color.black.opacity(0.06), radius: 3, x: 0, y: 1.5)
-        .shadow(color: Color(red: 0x36 / 255.0, green: 0x30 / 255.0, blue: 0x24 / 255.0).opacity(0.18), radius: 14, x: 0, y: 6)
     }
 }
 

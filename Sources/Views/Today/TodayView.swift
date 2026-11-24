@@ -19,7 +19,6 @@ struct TodayView: View {
     @State private var selectedDate: Date = Calendar.current.startOfDay(for: .now)
     @State private var selectedFilter: TodayFilter = .all
     @State private var showAddSheet = false
-    @State private var showProfileSheet = false
 
     private var scheduledHabits: [Habit] {
         let calendar = Calendar.current
@@ -70,62 +69,44 @@ struct TodayView: View {
                         Text(selectedFilter.rawValue)
                             .font(.hostGrotesk(.medium, size: 13))
                             .foregroundStyle(Color.primaryText)
-                            .letterpress(isLight: false)
 
                         Image(systemName: "chevron.down")
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(Color.mutedText)
                     }
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule().fill(LinearGradient.cardGradient)
-                    )
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.cardSurface)
                     .clipShape(Capsule())
-                    .overlay(
-                        Capsule().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
                 }
-                .buttonStyle(SkeuomorphicButtonStyle())
+                .buttonStyle(AppPillButtonStyle())
 
                 Spacer()
 
                 // Center: Today title
                 VStack(spacing: 2) {
                     Text("Today")
-                        .font(.hostGrotesk(.semibold, size: 22))
+                        .font(.hostGrotesk(.medium, size: 22))
                         .foregroundStyle(Color.primaryText)
-                        .letterpress(isLight: false)
 
                     Text("\(completedCount) / \(scheduledHabits.count)")
                         .font(.hostGrotesk(.medium, size: 12))
                         .monospacedDigit()
                         .foregroundStyle(Color.cobaltBlue)
-                        .letterpress(isLight: false)
                 }
 
                 Spacer()
 
-                // Right: Tactile Add button
-                Button {
-                    showAddSheet = true
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(LinearGradient.cardGradient)
-                            .frame(width: 36, height: 36)
-                            .overlay(
-                                Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1)
-                            )
-                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                // Right: Profile/Status Button
+                ZStack {
+                    Circle()
+                        .fill(Color.cardSurface)
+                        .frame(width: 36, height: 36)
 
-                        Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Color.cobaltBlue)
-                    }
+                    Text(syncService.isAuthenticated ? syncService.displayName.prefix(1).uppercased() : "●")
+                        .font(.hostGrotesk(.semibold, size: 13))
+                        .foregroundStyle(Color.cobaltBlue)
                 }
-                .buttonStyle(SkeuomorphicButtonStyle())
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
@@ -133,9 +114,7 @@ struct TodayView: View {
 
             // 7-day Horizontal Week Strip
             WeekStripView(selectedDate: $selectedDate)
-
-            HairlineDivider()
-                .padding(.top, 4)
+                .padding(.bottom, 4)
 
             // Habit List or Empty State
             if scheduledHabits.isEmpty {
@@ -184,7 +163,7 @@ struct TodayView: View {
                 }
             }
         }
-        .paperBackground()
+        .background(Color.pageGround.ignoresSafeArea())
         .task {
             autoSyncDailyStats()
         }

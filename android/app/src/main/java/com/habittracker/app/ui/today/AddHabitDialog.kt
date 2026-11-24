@@ -83,7 +83,7 @@ fun AddHabitDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(CircleShape)
                         .background(CardSurface)
                         .padding(4.dp)
                 ) {
@@ -92,7 +92,7 @@ fun AddHabitDialog(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(6.dp))
+                                .clip(CircleShape)
                                 .background(if (isSelected) CobaltBlue else Color.Transparent)
                                 .clickable { habitType = type }
                                 .padding(vertical = 8.dp),
@@ -161,7 +161,7 @@ fun AddHabitDialog(
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = CobaltBlue),
-                shape = RoundedCornerShape(8.dp),
+                shape = CircleShape,
                 enabled = title.isNotBlank()
             ) {
                 Text("Save", color = CobaltLabel)

@@ -113,11 +113,10 @@ fun MainScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
-                    .shadow(8.dp, RoundedCornerShape(32.dp))
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(CardBrush)
-                    .border(1.dp, TopLightBevel, RoundedCornerShape(32.dp))
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .clip(CircleShape)
+                    .background(CardSurface)
+                    .border(1.dp, Hairline, CircleShape)
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 Row(
@@ -129,14 +128,12 @@ fun MainScreen(
                         val isSelected = selectedIndex == index
 
                         if (index == 0 && selectedIndex == 0) {
-                            // Smart + shortcut on Tab 1
+                            // Smart + shortcut on Tab 1: Solid Royal Blue circular button
                             Box(
                                 modifier = Modifier
-                                    .size(42.dp)
-                                    .shadow(4.dp, CircleShape)
+                                    .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(CobaltEnamelBrush)
-                                    .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                                    .background(CobaltBlue)
                                     .clickable { showAddHabitDialog = true },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -151,12 +148,10 @@ fun MainScreen(
                             Box(
                                 modifier = Modifier
                                     .height(38.dp)
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .clip(CircleShape)
                                     .then(
                                         if (isSelected) {
-                                            Modifier
-                                                .background(WellBrush)
-                                                .border(1.dp, ReverseBevel, RoundedCornerShape(16.dp))
+                                            Modifier.background(CobaltBlue.copy(alpha = 0.12f))
                                         } else {
                                             Modifier
                                         }

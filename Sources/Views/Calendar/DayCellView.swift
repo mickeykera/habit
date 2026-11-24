@@ -22,78 +22,39 @@ struct DayCellView: View {
                         .monospacedDigit()
                         .foregroundStyle(Color.mutedText.opacity(0.35))
                 } else if isDone {
-                    // Glossy cobalt enamel gem
+                    // Stepped royal blue completion fill
                     Circle()
-                        .fill(isPerfect ? LinearGradient.cobaltEnamel : LinearGradient(colors: [Color.cobaltBlue.opacity(0.6), Color.cobaltDeep.opacity(0.8)], startPoint: .top, endPoint: .bottom))
+                        .fill(isPerfect ? Color.cobaltBlue : Color.cobaltBlue.opacity(0.20 + completionRate * 0.6))
                         .frame(width: 30, height: 30)
-                        .overlay(
-                            // Top specular highlight crescent
-                            VStack {
-                                LinearGradient(colors: [Color.white.opacity(0.65), Color.clear], startPoint: .top, endPoint: .bottom)
-                                    .frame(height: 10)
-                                Spacer()
-                            }
-                            .clipShape(Circle())
-                        )
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    LinearGradient(colors: [Color.white.opacity(0.7), Color.black.opacity(0.3)], startPoint: .top, endPoint: .bottom),
-                                    lineWidth: 1
-                                )
-                        )
-                        .shadow(color: Color.cobaltBlue.opacity(0.35), radius: 3, x: 0, y: 1.5)
 
                     Text("\(dayNumber)")
                         .font(.hostGrotesk(.semibold, size: 12))
                         .monospacedDigit()
-                        .foregroundStyle(Color.cobaltLabel)
-                        .letterpress(isLight: true)
+                        .foregroundStyle(isPerfect || completionRate >= 0.6 ? Color.cobaltLabel : Color.cobaltBlue)
                 } else {
-                    // Tactile recessed well for uncompleted days
                     Circle()
-                        .fill(LinearGradient.wellGradient)
+                        .fill(Color.pageGround)
                         .frame(width: 30, height: 30)
-                        .overlay(
-                            VStack(spacing: 0) {
-                                LinearGradient(colors: [Color.black.opacity(0.20), Color.clear], startPoint: .top, endPoint: .bottom)
-                                    .frame(height: 2.5)
-                                Spacer()
-                                Color.white.opacity(0.80)
-                                    .frame(height: 1)
-                            }
-                            .clipShape(Circle())
-                        )
-                        .overlay(
-                            Circle()
-                                .strokeBorder(LinearGradient.reverseBevel, lineWidth: 0.8)
-                        )
 
                     Text("\(dayNumber)")
                         .font(.hostGrotesk(.medium, size: 12))
                         .monospacedDigit()
                         .foregroundStyle(Color.primaryText)
-                        .letterpress(isLight: false)
                 }
 
-                // Selection bezel ring
+                // Selection ring
                 if isSelected && isCurrentMonth {
                     Circle()
-                        .strokeBorder(
-                            LinearGradient(colors: [Color.cobaltBlue, Color.cobaltDeep], startPoint: .top, endPoint: .bottom),
-                            lineWidth: 2
-                        )
+                        .strokeBorder(Color.cobaltBlue, lineWidth: 2)
                         .frame(width: 33, height: 33)
-                        .shadow(color: Color.cobaltBlue.opacity(0.4), radius: 3, x: 0, y: 1)
                 }
             }
 
-            // Glowing cobalt dot under today's date
+            // Cobalt dot under today's date
             if isToday {
                 Circle()
                     .fill(Color.cobaltBlue)
                     .frame(width: 3.5, height: 3.5)
-                    .shadow(color: Color.cobaltBlue.opacity(0.8), radius: 2.5, x: 0, y: 0)
             } else {
                 Circle()
                     .fill(Color.clear)
@@ -114,5 +75,5 @@ struct DayCellView: View {
         DayCellView(date: .now, completionRate: 1.0, isToday: true, isSelected: true, isCurrentMonth: true)
     }
     .padding()
-    .background(Color.pageGround)
+    .background(Color.cardSurface)
 }

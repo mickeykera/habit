@@ -64,7 +64,6 @@ import com.habittracker.app.theme.ReverseBevel
 import com.habittracker.app.theme.SecondaryText
 import com.habittracker.app.theme.TopLightBevel
 import com.habittracker.app.theme.WellBrush
-import com.habittracker.app.ui.components.EngravedDivider
 import kotlinx.coroutines.launch
 
 @Composable
@@ -113,10 +112,8 @@ fun AuthScreen(
         Box(
             modifier = Modifier
                 .size(64.dp)
-                .shadow(3.dp, RoundedCornerShape(16.dp))
-                .clip(RoundedCornerShape(16.dp))
-                .background(CardBrush)
-                .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp)),
+                .clip(RoundedCornerShape(8.dp))
+                .background(CardSurface),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -146,12 +143,12 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Toggle Switcher Pill (Recessed Trough)
+        // Toggle Switcher Pill
         Row(
             modifier = Modifier
                 .clip(CircleShape)
-                .background(WellBrush)
-                .border(1.dp, ReverseBevel, CircleShape)
+                .background(CardSurface)
+                .border(1.dp, Hairline, CircleShape)
                 .padding(4.dp)
         ) {
             Box(
@@ -160,10 +157,8 @@ fun AuthScreen(
                     .then(
                         if (!isSignUp) {
                             Modifier
-                                .shadow(2.dp, CircleShape)
                                 .clip(CircleShape)
-                                .background(CobaltEnamelBrush)
-                                .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                                .background(CobaltBlue)
                         } else {
                             Modifier.clip(CircleShape)
                         }
@@ -189,10 +184,8 @@ fun AuthScreen(
                     .then(
                         if (isSignUp) {
                             Modifier
-                                .shadow(2.dp, CircleShape)
                                 .clip(CircleShape)
-                                .background(CobaltEnamelBrush)
-                                .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                                .background(CobaltBlue)
                         } else {
                             Modifier.clip(CircleShape)
                         }
@@ -221,9 +214,9 @@ fun AuthScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(8.dp))
                         .background(Color(0xFFFFEBEE))
-                        .border(1.dp, Color(0xFFFFCDD2), RoundedCornerShape(10.dp))
+                        .border(1.dp, Color(0xFFFFCDD2), RoundedCornerShape(8.dp))
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -244,10 +237,8 @@ fun AuthScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(4.dp, RoundedCornerShape(16.dp))
-                .clip(RoundedCornerShape(16.dp))
-                .background(CardBrush)
-                .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(8.dp))
+                .background(CardSurface)
                 .padding(18.dp)
         ) {
             if (isSignUp) {
@@ -310,10 +301,8 @@ fun AuthScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
-                    .shadow(2.dp, RoundedCornerShape(12.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-                shape = RoundedCornerShape(12.dp),
+                    .height(48.dp),
+                shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(containerColor = CobaltBlue),
                 enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
             ) {
@@ -337,7 +326,12 @@ fun AuthScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(modifier = Modifier.weight(1f)) { EngravedDivider() }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(1.dp)
+                    .background(Hairline)
+            )
             Text(
                 text = "OR CONTINUE WITH",
                 fontSize = 11.sp,
@@ -345,7 +339,12 @@ fun AuthScreen(
                 color = MutedText,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
-            Box(modifier = Modifier.weight(1f)) { EngravedDivider() }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(1.dp)
+                    .background(Hairline)
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -392,12 +391,11 @@ private fun OAuthButtonRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .background(CardBrush)
-            .border(1.dp, TopLightBevel, RoundedCornerShape(12.dp))
+            .clip(CircleShape)
+            .background(CardSurface)
+            .border(1.dp, Hairline, CircleShape)
             .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 13.dp),
+            .padding(horizontal = 20.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(

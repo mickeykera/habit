@@ -61,7 +61,6 @@ import com.habittracker.app.theme.SecondaryText
 import com.habittracker.app.theme.TopLightBevel
 import com.habittracker.app.theme.WellBrush
 import com.habittracker.app.ui.components.CompletionCircle
-import com.habittracker.app.ui.components.EngravedDivider
 import com.habittracker.app.ui.components.HairlineDivider
 import com.habittracker.app.ui.components.InverseBadge
 import kotlinx.coroutines.launch
@@ -120,12 +119,10 @@ fun TodayScreen(
             Box {
                 Row(
                     modifier = Modifier
-                        .shadow(2.dp, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(CardBrush)
-                        .border(1.dp, TopLightBevel, RoundedCornerShape(16.dp))
+                        .clip(CircleShape)
+                        .background(CardSurface)
                         .clickable { showFilterMenu = true }
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -175,14 +172,12 @@ fun TodayScreen(
                 )
             }
 
-            // Right: + button
+            // Right: Profile/Status Button
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .shadow(2.dp, CircleShape)
+                    .size(36.dp)
                     .clip(CircleShape)
-                    .background(CardBrush)
-                    .border(1.dp, TopLightBevel, CircleShape)
+                    .background(CardSurface)
                     .clickable { onOpenAdd() },
                 contentAlignment = Alignment.Center
             ) {
@@ -190,7 +185,7 @@ fun TodayScreen(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add",
                     tint = CobaltBlue,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -201,7 +196,7 @@ fun TodayScreen(
             onDateSelected = { selectedDate = it }
         )
 
-        EngravedDivider(modifier = Modifier.padding(top = 4.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Habit List
         if (scheduledHabits.isEmpty()) {
@@ -244,19 +239,8 @@ fun TodayScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .shadow(if (isDone) 1.dp else 2.dp, RoundedCornerShape(14.dp))
-                            .clip(RoundedCornerShape(14.dp))
-                            .then(
-                                if (isDone) {
-                                    Modifier
-                                        .background(CobaltBlue.copy(alpha = 0.08f))
-                                        .border(1.dp, CobaltBlue, RoundedCornerShape(14.dp))
-                                } else {
-                                    Modifier
-                                        .background(CardBrush)
-                                        .border(1.dp, TopLightBevel, RoundedCornerShape(14.dp))
-                                }
-                            )
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isDone) CobaltBlue.copy(alpha = 0.08f) else CardSurface)
                             .clickable {
                                 scope.launch {
                                     val newLog = HabitLog(

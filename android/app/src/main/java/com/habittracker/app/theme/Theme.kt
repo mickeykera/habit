@@ -1,27 +1,28 @@
 package com.habittracker.app.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 
-val PaperGroundBrush = Brush.verticalGradient(listOf(PaperLight, PaperDark))
-val CardBrush = Brush.verticalGradient(listOf(CardTop, CardBottom))
-val WellBrush = Brush.verticalGradient(listOf(WellTop, WellBottom))
-val CobaltEnamelBrush = Brush.verticalGradient(listOf(CobaltLight, CobaltBlue, CobaltDeep))
-val CharcoalBrush = Brush.verticalGradient(listOf(CharcoalLight, CharcoalDark))
-val TopLightBevel = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.85f), Color.Black.copy(alpha = 0.12f)))
-val ReverseBevel = Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.18f), Color.White.copy(alpha = 0.75f)))
-val GoldMedalBrush = Brush.verticalGradient(listOf(GoldLight, GoldMid, GoldDark))
-val SilverMedalBrush = Brush.verticalGradient(listOf(SilverLight, SilverMid, SilverDark))
-val BronzeMedalBrush = Brush.verticalGradient(listOf(BronzeLight, BronzeMid, BronzeDark))
+// Flat single-color brushes for clean minimal surfaces
+val PaperGroundBrush: Brush = SolidColor(PageGround)
+val CardBrush: Brush = SolidColor(CardSurface)
+val WellBrush: Brush = SolidColor(CardSurface)
+val CobaltEnamelBrush: Brush = SolidColor(CobaltBlue)
+val CharcoalBrush: Brush = SolidColor(InverseSurface)
+val TopLightBevel: Brush = SolidColor(Color.Transparent)
+val ReverseBevel: Brush = SolidColor(Color.Transparent)
+val GoldMedalBrush: Brush = SolidColor(CobaltBlue)
+val SilverMedalBrush: Brush = SolidColor(CardSurface)
+val BronzeMedalBrush: Brush = SolidColor(CardSurface)
 
 private val LightColorScheme = lightColorScheme(
     primary = CobaltBlue,

@@ -54,7 +54,8 @@ fun WeekStrip(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .background(PageGround)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         weekDates.forEachIndexed { index, date ->
@@ -65,13 +66,10 @@ fun WeekStrip(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(CircleShape)
                     .then(
                         if (isSelected) {
-                            Modifier
-                                .shadow(2.dp, RoundedCornerShape(20.dp))
-                                .background(CardBrush)
-                                .border(1.5.dp, CobaltBlue, RoundedCornerShape(20.dp))
+                            Modifier.background(CardSurface)
                         } else {
                             Modifier
                         }
@@ -86,6 +84,7 @@ fun WeekStrip(
                     color = if (isSelected) CobaltBlue else MutedText,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Box(
                     modifier = Modifier
                         .size(32.dp)
@@ -93,15 +92,11 @@ fun WeekStrip(
                         .then(
                             when {
                                 isSelected -> Modifier
-                                    .shadow(2.dp, CircleShape)
-                                    .background(CobaltEnamelBrush)
-                                    .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                                    .background(CobaltBlue.copy(alpha = 0.12f))
+                                    .border(2.dp, CobaltBlue, CircleShape)
                                 isToday -> Modifier
-                                    .background(WellBrush)
-                                    .border(1.dp, CobaltBlue.copy(alpha = 0.6f), CircleShape)
+                                    .background(CardSurface)
                                 else -> Modifier
-                                    .background(WellBrush)
-                                    .border(1.dp, ReverseBevel, CircleShape)
                             }
                         ),
                     contentAlignment = Alignment.Center
@@ -109,9 +104,9 @@ fun WeekStrip(
                     Text(
                         text = date.dayOfMonth.toString(),
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                         fontFamily = FontFamily.Monospace,
-                        color = if (isSelected) CobaltLabel else PrimaryText
+                        color = if (isSelected || isToday) CobaltBlue else PrimaryText
                     )
                 }
             }

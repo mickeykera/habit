@@ -28,36 +28,31 @@ struct FriendsView: View {
                 Text("Friends")
                     .font(.hostGrotesk(.medium, size: 22))
                     .foregroundStyle(Color.primaryText)
-                    .letterpress(isLight: false)
 
                 Spacer()
 
-                // Right circular + button
+                // Right + pill button
                 Button {
                     showAddFriend = true
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(LinearGradient.cardGradient)
+                            .fill(Color.cardSurface)
                             .frame(width: 36, height: 36)
-                            .overlay(Circle().strokeBorder(LinearGradient.topLightBevel, lineWidth: 1))
-                            .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
 
                         Image(systemName: "plus")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Color.cobaltBlue)
                     }
                 }
-                .buttonStyle(SkeuomorphicButtonStyle())
+                .buttonStyle(AppPillButtonStyle())
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, 8)
 
-            EngravedDivider()
-
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: 20) {
                     if !syncService.isConfigured {
                         unconfiguredBanner
                     }
@@ -65,7 +60,7 @@ struct FriendsView: View {
                     // User Card
                     userCard
 
-                    // Timeframe Picker
+                    // Timeframe Picker Pills
                     timeframePicker
 
                     // Leaderboard or Empty State
@@ -80,7 +75,7 @@ struct FriendsView: View {
                 .padding(.bottom, 96) // Floating bar padding
             }
         }
-        .paperBackground()
+        .background(Color.pageGround.ignoresSafeArea())
         .sheet(isPresented: $showAddFriend) {
             addFriendSheet
         }
@@ -99,24 +94,21 @@ struct FriendsView: View {
         VStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(LinearGradient.wellGradient)
-                    .frame(width: 72, height: 72)
-                    .overlay(Circle().strokeBorder(LinearGradient.reverseBevel, lineWidth: 1))
-                    .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
+                    .fill(Color.cobaltBlue.opacity(0.12))
+                    .frame(width: 64, height: 64)
 
                 Image(systemName: "person.2.fill")
-                    .font(.system(size: 28))
+                    .font(.system(size: 26))
                     .foregroundStyle(Color.cobaltBlue)
             }
-            .padding(.top, 24)
+            .padding(.top, 16)
 
             Text("It's always nice to have someone by your side. Tap + to invite a friend.")
                 .font(.hostGrotesk(.medium, size: 15))
                 .foregroundStyle(Color.secondaryText)
-                .letterpress(isLight: false)
                 .multilineTextAlignment(.center)
                 .lineSpacing(3)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
 
             Button {
                 showAddFriend = true
@@ -128,18 +120,18 @@ struct FriendsView: View {
                         .font(.hostGrotesk(.semibold, size: 14))
                 }
                 .foregroundStyle(Color.cobaltLabel)
-                .letterpress(isLight: true)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
-                .skeuomorphicCobaltButton(cornerRadius: 10)
+                .background(Color.cobaltBlue)
+                .clipShape(Capsule())
             }
-            .buttonStyle(SkeuomorphicButtonStyle())
-            .padding(.top, 4)
+            .buttonStyle(AppPillButtonStyle())
             .padding(.bottom, 8)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .skeuomorphicCard(cornerRadius: 16)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     // MARK: - Unconfigured Banner
@@ -151,47 +143,41 @@ struct FriendsView: View {
                 Text("Friends sync not configured")
                     .font(.hostGrotesk(.semibold, size: 14))
                     .foregroundStyle(Color.primaryText)
-                    .letterpress(isLight: false)
             }
             Text("Add your Supabase credentials in Settings to enable cloud sync and compete with friends.")
                 .font(.hostGrotesk(.regular, size: 13))
                 .foregroundStyle(Color.secondaryText)
-                .letterpress(isLight: false)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .skeuomorphicCard(cornerRadius: 14)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     // MARK: - User Card
     private var userCard: some View {
         HStack(spacing: 14) {
-            // Cobalt enamel avatar medallion
+            // Circular Avatar Initials
             ZStack {
                 Circle()
-                    .fill(LinearGradient.cobaltEnamel)
-                    .frame(width: 46, height: 46)
-                    .overlay(Circle().strokeBorder(LinearGradient(colors: [Color.white.opacity(0.65), Color.black.opacity(0.3)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
-                    .shadow(color: Color.cobaltBlue.opacity(0.35), radius: 3, x: 0, y: 1.5)
+                    .fill(Color.cobaltBlue)
+                    .frame(width: 44, height: 44)
 
                 Text(initials(from: syncService.displayName))
                     .font(.hostGrotesk(.bold, size: 16))
                     .foregroundStyle(Color.cobaltLabel)
-                    .letterpress(isLight: true)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(syncService.displayName)
                     .font(.hostGrotesk(.semibold, size: 16))
                     .foregroundStyle(Color.primaryText)
-                    .letterpress(isLight: false)
 
                 HStack(spacing: 6) {
                     Text("Code: \(syncService.friendCode)")
                         .font(.hostGrotesk(.regular, size: 12))
                         .monospacedDigit()
                         .foregroundStyle(Color.mutedText)
-                        .letterpress(isLight: false)
 
                     Button {
                         UIPasteboard.general.string = syncService.friendCode
@@ -211,123 +197,88 @@ struct FriendsView: View {
                     .font(.hostGrotesk(.bold, size: 20))
                     .foregroundStyle(Color.cobaltBlue)
                     .monospacedDigit()
-                    .letterpress(isLight: false)
 
-                HStack(spacing: 4) {
-                    ZStack {
-                        Circle()
-                            .fill(LinearGradient.goldGradient)
-                            .frame(width: 16, height: 16)
-                            .overlay(Circle().strokeBorder(Color.white.opacity(0.8), lineWidth: 0.5))
-
-                        Text("1")
-                            .font(.hostGrotesk(.bold, size: 10))
-                            .foregroundStyle(Color(red: 0.24, green: 0.17, blue: 0.02))
-                    }
-                    Text("Rank #1")
-                        .font(.hostGrotesk(.semibold, size: 12))
-                        .foregroundStyle(Color.secondaryText)
-                        .letterpress(isLight: false)
-                }
+                Text("Rank #1")
+                    .font(.hostGrotesk(.semibold, size: 12))
+                    .foregroundStyle(Color.secondaryText)
             }
         }
         .padding(14)
-        .skeuomorphicCard(cornerRadius: 16)
+        .background(Color.cobaltBlue.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
-    // MARK: - Timeframe Picker
+    // MARK: - Timeframe Picker (Pills)
     private var timeframePicker: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 6) {
             ForEach(Timeframe.allCases, id: \.self) { tf in
-                timeframeButton(for: tf)
-            }
-        }
-        .padding(4)
-        .skeuomorphicWell(cornerRadius: 11)
-    }
-
-    private func timeframeButton(for tf: Timeframe) -> some View {
-        let isSelected = timeframe == tf
-        return Button {
-            withAnimation(.snappySpring) {
-                timeframe = tf
-            }
-        } label: {
-            Text(tf.displayName)
-                .font(.hostGrotesk(.medium, size: 13))
-                .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
-                .letterpress(isLight: isSelected)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 7)
-                .background(
-                    Group {
-                        if isSelected {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(LinearGradient.cobaltEnamel)
-                                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(LinearGradient(colors: [Color.white.opacity(0.65), Color.black.opacity(0.2)], startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
-                                .shadow(color: Color.cobaltBlue.opacity(0.3), radius: 2, x: 0, y: 1)
-                        } else {
-                            Color.clear
-                        }
+                let isSelected = timeframe == tf
+                Button {
+                    withAnimation(.snappySpring) {
+                        timeframe = tf
                     }
-                )
+                } label: {
+                    Text(tf.displayName)
+                        .font(.hostGrotesk(.medium, size: 13))
+                        .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(isSelected ? Color.cobaltBlue : Color.cardSurface)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(AppPillButtonStyle())
+            }
         }
-        .buttonStyle(SkeuomorphicButtonStyle())
     }
 
     // MARK: - Leaderboard Section
     private var leaderboardSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             HStack {
                 Text("LEADERBOARD")
                     .font(.hostGrotesk(.semibold, size: 12))
                     .foregroundStyle(Color.mutedText)
-                    .letterpress(isLight: false)
                 Spacer()
             }
 
-            VStack(spacing: 0) {
+            VStack(spacing: 8) {
                 ForEach(Array(displayFriends.enumerated()), id: \.element.id) { index, friend in
                     friendRow(rank: index + 1, friend: friend)
-                    if index < displayFriends.count - 1 {
-                        EngravedDivider().padding(.leading, 50)
-                    }
                 }
             }
-            .skeuomorphicCard(cornerRadius: 16)
         }
     }
 
     private func friendRow(rank: Int, friend: FriendStats) -> some View {
         HStack(spacing: 12) {
-            rankMedallion(rank: rank)
+            // Rank number
+            Text("\(rank)")
+                .font(.hostGrotesk(.bold, size: 14))
+                .monospacedDigit()
+                .foregroundStyle(rank == 1 ? Color.cobaltBlue : Color.secondaryText)
+                .frame(width: 20)
 
-            // Anodized charcoal avatar
+            // Avatar circle
             ZStack {
                 Circle()
-                    .fill(LinearGradient.charcoalGradient)
+                    .fill(Color.inverseSurface)
                     .frame(width: 34, height: 34)
-                    .overlay(Circle().strokeBorder(LinearGradient(colors: [Color.white.opacity(0.3), Color.black.opacity(0.5)], startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
-                    .shadow(color: Color.black.opacity(0.12), radius: 1.5, x: 0, y: 1)
 
                 Text(friend.avatarInitials)
                     .font(.hostGrotesk(.semibold, size: 12))
                     .foregroundStyle(Color.inverseText)
-                    .letterpress(isLight: true)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(friend.displayName)
                     .font(.hostGrotesk(.medium, size: 15))
                     .foregroundStyle(Color.primaryText)
-                    .letterpress(isLight: false)
 
                 HStack(spacing: 6) {
                     Text("\(friend.totalCompletions) done")
                         .font(.hostGrotesk(.regular, size: 12))
                         .monospacedDigit()
                         .foregroundStyle(Color.mutedText)
-                        .letterpress(isLight: false)
 
                     Text("·")
                         .foregroundStyle(Color.mutedText)
@@ -336,20 +287,17 @@ struct FriendsView: View {
                         .font(.hostGrotesk(.regular, size: 12))
                         .monospacedDigit()
                         .foregroundStyle(Color.mutedText)
-                        .letterpress(isLight: false)
                 }
 
-                // Recessed progress bar
+                // Flat progress bar
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule()
-                            .fill(LinearGradient.wellGradient)
-                            .overlay(Capsule().strokeBorder(LinearGradient.reverseBevel, lineWidth: 0.5))
+                            .fill(Color.pageGround)
 
                         Capsule()
-                            .fill(LinearGradient.cobaltEnamel)
+                            .fill(Color.cobaltBlue)
                             .frame(width: max(0, geo.size.width * CGFloat(friend.completionRate)))
-                            .shadow(color: Color.cobaltBlue.opacity(0.3), radius: 1, x: 0, y: 0.5)
                     }
                 }
                 .frame(height: 5)
@@ -359,59 +307,14 @@ struct FriendsView: View {
             Spacer()
 
             Text("\(Int(friend.completionRate * 100))%")
-                .font(.hostGrotesk(.bold, size: 17))
+                .font(.hostGrotesk(.bold, size: 16))
                 .foregroundStyle(Color.cobaltBlue)
                 .monospacedDigit()
-                .letterpress(isLight: false)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-    }
-
-    private func rankMedallion(rank: Int) -> some View {
-        let (gradient, textColor, borderColor) = medalColors(for: rank)
-        return ZStack {
-            Circle()
-                .fill(gradient)
-                .frame(width: 26, height: 26)
-                .overlay(Circle().strokeBorder(borderColor, lineWidth: 0.75))
-                .shadow(color: Color.black.opacity(rank <= 3 ? 0.2 : 0.05), radius: 1.5, x: 0, y: 1)
-
-            Text("\(rank)")
-                .font(.hostGrotesk(.bold, size: 12))
-                .monospacedDigit()
-                .foregroundStyle(textColor)
-                .letterpress(isLight: rank <= 3)
-        }
-    }
-
-    private func medalColors(for rank: Int) -> (LinearGradient, Color, LinearGradient) {
-        switch rank {
-        case 1:
-            return (
-                LinearGradient.goldGradient,
-                Color(red: 0.24, green: 0.17, blue: 0.02),
-                LinearGradient(colors: [Color.white.opacity(0.85), Color.black.opacity(0.3)], startPoint: .top, endPoint: .bottom)
-            )
-        case 2:
-            return (
-                LinearGradient.silverGradient,
-                Color(red: 0.15, green: 0.15, blue: 0.15),
-                LinearGradient(colors: [Color.white.opacity(0.9), Color.black.opacity(0.3)], startPoint: .top, endPoint: .bottom)
-            )
-        case 3:
-            return (
-                LinearGradient.bronzeGradient,
-                Color(red: 0.24, green: 0.12, blue: 0.05),
-                LinearGradient(colors: [Color.white.opacity(0.8), Color.black.opacity(0.3)], startPoint: .top, endPoint: .bottom)
-            )
-        default:
-            return (
-                LinearGradient.wellGradient,
-                Color.secondaryText,
-                LinearGradient.reverseBevel
-            )
-        }
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     // MARK: - Add Friend Sheet
@@ -423,14 +326,12 @@ struct FriendsView: View {
                     Text("YOUR FRIEND CODE")
                         .font(.hostGrotesk(.semibold, size: 12))
                         .foregroundStyle(Color.mutedText)
-                        .letterpress(isLight: false)
 
                     HStack {
                         Text(syncService.friendCode.isEmpty ? "------" : syncService.friendCode)
                             .font(.hostGrotesk(.bold, size: 26))
                             .foregroundStyle(Color.primaryText)
                             .monospacedDigit()
-                            .letterpress(isLight: false)
 
                         Spacer()
 
@@ -446,17 +347,15 @@ struct FriendsView: View {
                         }
                     }
                     .padding(14)
-                    .skeuomorphicCard(cornerRadius: 12)
+                    .background(Color.cardSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
-
-                EngravedDivider()
 
                 // Add by code
                 VStack(alignment: .leading, spacing: 8) {
                     Text("ENTER FRIEND'S CODE")
                         .font(.hostGrotesk(.semibold, size: 12))
                         .foregroundStyle(Color.mutedText)
-                        .letterpress(isLight: false)
 
                     HStack {
                         TextField("6-character code", text: $friendCodeInput)
@@ -469,20 +368,22 @@ struct FriendsView: View {
                         }
                         .font(.hostGrotesk(.semibold, size: 14))
                         .foregroundStyle(Color.cobaltLabel)
-                        .letterpress(isLight: true)
-                        .padding(.horizontal, 14)
+                        .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .skeuomorphicCobaltButton(cornerRadius: 8)
+                        .background(Color.cobaltBlue)
+                        .clipShape(Capsule())
                         .disabled(friendCodeInput.trimmingCharacters(in: .whitespaces).count != 6)
                     }
                     .padding(12)
-                    .skeuomorphicWell(cornerRadius: 12)
+                    .background(Color.cardSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.hairline, lineWidth: 1))
                 }
 
                 Spacer()
             }
             .padding(16)
-            .paperBackground()
+            .background(Color.pageGround.ignoresSafeArea())
             .navigationTitle("Add Friend")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
