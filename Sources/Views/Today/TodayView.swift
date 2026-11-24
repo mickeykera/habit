@@ -155,5 +155,5 @@ struct TodayView: View {
 
 #Preview {
     TodayView()
-        .modelContainer(for: [Habit.self, HabitLog.self], inMemory: true)
+        .modelContainer(for: Habit.self, HabitLog.self, inMemory: true)
 }

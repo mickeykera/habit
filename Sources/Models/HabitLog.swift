@@ -45,15 +45,9 @@ final class HabitLog {
         context: ModelContext
     ) {
         let startOfDay = Calendar.current.startOfDay(for: date)
-        let habitID = habit.id
-
-        let descriptor = FetchDescriptor<HabitLog>(
-            predicate: #Predicate<HabitLog> { log in
-                log.habit?.id == habitID && log.date == startOfDay
-            }
-        )
-
-        let existing = try? context.fetch(descriptor).first
+        let existing = habit.logs.first {
+            Calendar.current.isDate($0.date, inSameDayAs: startOfDay)
+        }
 
         if let log = existing {
             if asSlip && habit.type == .quit {

@@ -19,16 +19,20 @@ targets:
   HabitTracker:
     type: application
     platform: iOS
+    deploymentTarget: "18.0"
     sources:
-      - Sources/
-    resources:
-      - Resources/
+      - path: Sources
+      - path: Resources
+        optional: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.habittracker.app
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_IDENTITY: ""
     info:
       properties:
         UIAppFonts:
@@ -41,3 +45,13 @@ targets:
         product: Supabase
     entitlements:
       properties: {}
+
+schemes:
+  HabitTracker:
+    build:
+      targets:
+        HabitTracker: all
+    run:
+      config: Debug
+    archive:
+      config: Release

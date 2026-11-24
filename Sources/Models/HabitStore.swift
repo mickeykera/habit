@@ -21,7 +21,7 @@ final class HabitStore {
     /// All non-archived habits sorted by `sortOrder`.
     var habits: [Habit] {
         let descriptor = FetchDescriptor<Habit>(
-            predicate: #Predicate { $0.isArchived == false },
+            predicate: #Predicate<Habit> { !$0.isArchived },
             sortBy: [SortDescriptor(\Habit.sortOrder)]
         )
         return (try? modelContext.fetch(descriptor)) ?? []
@@ -38,13 +38,7 @@ final class HabitStore {
     /// Fetch the log entry for a habit on a specific date.
     func log(for habit: Habit, on date: Date) -> HabitLog? {
         let startOfDay = Calendar.current.startOfDay(for: date)
-        let habitID = habit.id
-        let descriptor = FetchDescriptor<HabitLog>(
-            predicate: #Predicate<HabitLog> { log in
-                log.habit?.id == habitID && log.date == startOfDay
-            }
-        )
-        return try? modelContext.fetch(descriptor).first
+        return habit.logs.first { Calendar.current.isDate($0.date, inSameDayAs: startOfDay) }
     }
 
     // MARK: - Mutations
