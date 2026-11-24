@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
@@ -68,7 +69,11 @@ import com.habittracker.app.ui.components.HairlineDivider
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(habitDao: HabitDao, syncService: SupabaseSyncService) {
+fun SettingsScreen(
+    habitDao: HabitDao,
+    syncService: SupabaseSyncService,
+    onSignOut: () -> Unit = {}
+) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
@@ -165,6 +170,13 @@ fun SettingsScreen(habitDao: HabitDao, syncService: SupabaseSyncService) {
                         fontFamily = FontFamily.Monospace,
                         color = MutedText
                     )
+                    if (syncService.currentUserEmail.isNotBlank()) {
+                        Text(
+                            text = syncService.currentUserEmail,
+                            fontSize = 11.sp,
+                            color = MutedText
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -279,6 +291,17 @@ fun SettingsScreen(habitDao: HabitDao, syncService: SupabaseSyncService) {
                 HairlineDivider(modifier = Modifier.padding(horizontal = 14.dp))
                 SettingsChevronRow(title = "Data & Backup", subtitle = "Export / Reset", icon = Icons.Default.Storage) {
                     showResetDialog = true
+                }
+
+                HairlineDivider(modifier = Modifier.padding(horizontal = 14.dp))
+
+                SettingsChevronRow(
+                    title = "Sign Out",
+                    subtitle = syncService.currentUserEmail.ifBlank { "Account" },
+                    icon = Icons.AutoMirrored.Filled.ExitToApp
+                ) {
+                    syncService.signOut()
+                    onSignOut()
                 }
             }
 

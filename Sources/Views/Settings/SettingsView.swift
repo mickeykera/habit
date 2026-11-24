@@ -175,6 +175,12 @@ struct SettingsView: View {
                     .font(.hostGrotesk(.regular, size: 12))
                     .monospacedDigit()
                     .foregroundStyle(Color.mutedText)
+
+                if let email = syncService.currentUserEmail {
+                    Text(email)
+                        .font(.hostGrotesk(.regular, size: 11))
+                        .foregroundStyle(Color.mutedText)
+                }
             }
 
             Spacer()
@@ -291,6 +297,14 @@ struct SettingsView: View {
 
             chevronRow(title: "Data & Backup", subtitle: "JSON / CSV / Reset", icon: "externaldrive") {
                 showDataBackupSheet = true
+            }
+
+            HairlineDivider().padding(.horizontal, 14)
+
+            chevronRow(title: "Sign Out", subtitle: syncService.currentUserEmail ?? "Account", icon: "rectangle.portrait.and.arrow.right") {
+                Task {
+                    await syncService.signOut()
+                }
             }
         }
         .background(Color.cardSurface)

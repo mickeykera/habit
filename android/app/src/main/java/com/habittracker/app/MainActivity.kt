@@ -54,6 +54,7 @@ import com.habittracker.app.theme.HabitTrackerTheme
 import com.habittracker.app.theme.MutedText
 import com.habittracker.app.theme.PageGround
 import com.habittracker.app.theme.SecondaryText
+import com.habittracker.app.ui.auth.AuthScreen
 import com.habittracker.app.ui.calendar.CalendarScreen
 import com.habittracker.app.ui.friends.FriendsScreen
 import com.habittracker.app.ui.report.ReportScreen
@@ -72,7 +73,20 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             HabitTrackerTheme {
-                MainScreen(habitDao, syncService)
+                var isAuthenticated by remember { mutableStateOf(syncService.isAuthenticated) }
+
+                if (!isAuthenticated) {
+                    AuthScreen(
+                        syncService = syncService,
+                        onAuthSuccess = { isAuthenticated = true }
+                    )
+                } else {
+                    MainScreen(
+                        habitDao = habitDao,
+                        syncService = syncService,
+                        onSignOut = { isAuthenticated = false }
+                    )
+                }
             }
         }
     }
@@ -81,7 +95,11 @@ class MainActivity : ComponentActivity() {
 data class NavItem(val label: String, val icon: ImageVector)
 
 @Composable
-fun MainScreen(habitDao: com.habittracker.app.data.HabitDao, syncService: SupabaseSyncService) {
+fun MainScreen(
+    habitDao: com.habittracker.app.data.HabitDao,
+    syncService: SupabaseSyncService,
+    onSignOut: () -> Unit = {}
+) {
     var selectedIndex by remember { mutableIntStateOf(0) }
     var showAddHabitDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -169,7 +187,7 @@ fun MainScreen(habitDao: com.habittracker.app.data.HabitDao, syncService: Supaba
                     1 -> CalendarScreen(habitDao, onOpenAdd = { showAddHabitDialog = true })
                     2 -> FriendsScreen(syncService)
                     3 -> ReportScreen(habitDao)
-                    4 -> SettingsScreen(habitDao, syncService)
+                    4 -> SettingsScreen(habitDao, syncService, onSignOut = onSignOut)
                 }
             }
         }

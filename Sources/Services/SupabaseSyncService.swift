@@ -72,6 +72,8 @@ final class SupabaseSyncService: @unchecked Sendable {
 
     var isConfigured: Bool = false
     var isSyncing: Bool = false
+    var isAuthenticated: Bool = false
+    var currentUserEmail: String?
     var lastSyncDate: Date?
     var displayName: String = "Habit Tracker"
     var friendCode: String = ""
@@ -96,6 +98,8 @@ final class SupabaseSyncService: @unchecked Sendable {
     init() {
         let savedName = UserDefaults.standard.string(forKey: "displayName")
         let savedCode = UserDefaults.standard.string(forKey: "friendCode")
+        let savedEmail = UserDefaults.standard.string(forKey: "currentUserEmail")
+        let savedAuth = UserDefaults.standard.bool(forKey: "is_authenticated")
 
         if let savedName, !savedName.isEmpty {
             self.displayName = savedName
@@ -103,6 +107,10 @@ final class SupabaseSyncService: @unchecked Sendable {
         if let savedCode, !savedCode.isEmpty {
             self.friendCode = savedCode
         }
+        if let savedEmail, !savedEmail.isEmpty {
+            self.currentUserEmail = savedEmail
+        }
+        self.isAuthenticated = savedAuth
 
         let effectiveURL = self.supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
         let effectiveKey = self.supabaseAnonKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -111,9 +119,15 @@ final class SupabaseSyncService: @unchecked Sendable {
             self.client = SupabaseClient(supabaseURL: url, supabaseKey: effectiveKey)
             self.isConfigured = true
 
-            // Automatically ensure user session on start
             Task { [weak self] in
-                try? await self?.ensureUser()
+                guard let self else { return }
+                if let session = try? await self.client?.auth.session {
+                    await MainActor.run {
+                        self.isAuthenticated = true
+                        self.currentUserEmail = session.user.email
+                    }
+                    try? await self.ensureUser()
+                }
             }
         }
     }
@@ -141,23 +155,79 @@ final class SupabaseSyncService: @unchecked Sendable {
 
     // MARK: - Auth
 
-    /// Sign in anonymously using Supabase Auth.
-    func signInAnonymously() async throws {
-        guard let client else { return }
-        try await client.auth.signInAnonymously()
+    /// Sign up with email, password, and display name using Supabase Auth.
+    func signUp(email: String, password: String, displayName: String) async throws {
+        guard let client else {
+            throw NSError(domain: "Supabase", code: 400, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized. Check your project URL and Anon key."])
+        }
+
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        _ = try await client.auth.signUp(
+            email: trimmedEmail,
+            password: password,
+            data: ["display_name": .string(trimmedName)]
+        )
+
+        await MainActor.run {
+            self.displayName = trimmedName.isEmpty ? "Habit Tracker" : trimmedName
+            self.currentUserEmail = trimmedEmail
+            self.isAuthenticated = true
+            UserDefaults.standard.set(self.displayName, forKey: "displayName")
+            UserDefaults.standard.set(self.currentUserEmail, forKey: "currentUserEmail")
+            UserDefaults.standard.set(true, forKey: "is_authenticated")
+        }
+
+        try? await ensureUser()
+    }
+
+    /// Sign in with existing email and password.
+    func signIn(email: String, password: String) async throws {
+        guard let client else {
+            throw NSError(domain: "Supabase", code: 400, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized. Check your project URL and Anon key."])
+        }
+
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let session = try await client.auth.signIn(email: trimmedEmail, password: password)
+
+        await MainActor.run {
+            self.currentUserEmail = session.user.email ?? trimmedEmail
+            if let metaName = session.user.userMetadata["display_name"]?.stringValue, !metaName.isEmpty {
+                self.displayName = metaName
+                UserDefaults.standard.set(metaName, forKey: "displayName")
+            }
+            self.isAuthenticated = true
+            UserDefaults.standard.set(self.currentUserEmail, forKey: "currentUserEmail")
+            UserDefaults.standard.set(true, forKey: "is_authenticated")
+        }
+
+        try? await ensureUser()
+    }
+
+    /// Retrieve OAuth authorization URL for the given provider.
+    func getOAuthURL(provider: Provider, redirectTo: URL? = nil) throws -> URL {
+        guard let client else {
+            throw NSError(domain: "Supabase", code: 400, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized."])
+        }
+        return try client.auth.getOAuthSignInURL(provider: provider, redirectTo: redirectTo)
+    }
+
+    /// Sign out and clear active session.
+    func signOut() async {
+        try? await client?.auth.signOut()
+        await MainActor.run {
+            self.isAuthenticated = false
+            self.currentUserEmail = nil
+            UserDefaults.standard.removeObject(forKey: "is_authenticated")
+            UserDefaults.standard.removeObject(forKey: "currentUserEmail")
+        }
     }
 
     /// Retrieve the current authenticated user's ID.
     private func currentUserID() async throws -> UUID? {
         guard let client else { return nil }
-
-        // Attempt to fetch active session
-        var session = try? await client.auth.session
-        if session == nil {
-            try await signInAnonymously()
-            session = try? await client.auth.session
-        }
-
+        let session = try? await client.auth.session
         return session?.user.id
     }
 

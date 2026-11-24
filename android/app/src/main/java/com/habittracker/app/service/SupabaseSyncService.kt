@@ -55,8 +55,125 @@ class SupabaseSyncService(context: Context) {
         }
         set(value) = prefs.edit().putString("friend_code", value).apply()
 
+    var accessToken: String
+        get() = prefs.getString("access_token", "") ?: ""
+        set(value) = prefs.edit().putString("access_token", value).apply()
+
+    var currentUserEmail: String
+        get() = prefs.getString("current_user_email", "") ?: ""
+        set(value) = prefs.edit().putString("current_user_email", value).apply()
+
+    var currentUserId: String
+        get() = prefs.getString("current_user_id", "") ?: ""
+        set(value) = prefs.edit().putString("current_user_id", value).apply()
+
+    var isAuthenticated: Boolean
+        get() = prefs.getBoolean("is_authenticated", false) && (accessToken.isNotBlank() || currentUserId.isNotBlank())
+        set(value) = prefs.edit().putBoolean("is_authenticated", value).apply()
+
     val isConfigured: Boolean
         get() = supabaseUrl.isNotBlank() && supabaseAnonKey.isNotBlank()
+
+    suspend fun signUp(email: String, pass: String, name: String): Result<Unit> = withContext(Dispatchers.IO) {
+        if (!isConfigured) return@withContext Result.failure(Exception("Supabase not configured. Check Project URL and Anon Key."))
+        try {
+            val endpoint = "$supabaseUrl/auth/v1/signup"
+            val url = URL(endpoint)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("apikey", supabaseAnonKey)
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.doOutput = true
+
+            val dataObj = JSONObject().apply { put("display_name", name.trim()) }
+            val payload = JSONObject().apply {
+                put("email", email.trim())
+                put("password", pass)
+                put("data", dataObj)
+            }
+
+            OutputStreamWriter(conn.outputStream).use { it.write(payload.toString()) }
+            val code = conn.responseCode
+            val responseText = if (code in 200..299) {
+                conn.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+            }
+
+            if (code in 200..299) {
+                val json = JSONObject(responseText)
+                accessToken = json.optString("access_token", "active_session")
+                val user = json.optJSONObject("user")
+                currentUserId = user?.optString("id", "") ?: ""
+                currentUserEmail = email.trim()
+                if (name.isNotBlank()) displayName = name.trim()
+                isAuthenticated = true
+                Result.success(Unit)
+            } else {
+                val errJson = try { JSONObject(responseText) } catch (e: Exception) { null }
+                val msg = errJson?.optString("msg") ?: errJson?.optString("error_description") ?: "Sign up failed ($code)"
+                Result.failure(Exception(msg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun signIn(email: String, pass: String): Result<Unit> = withContext(Dispatchers.IO) {
+        if (!isConfigured) return@withContext Result.failure(Exception("Supabase not configured. Check Project URL and Anon Key."))
+        try {
+            val endpoint = "$supabaseUrl/auth/v1/token?grant_type=password"
+            val url = URL(endpoint)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("apikey", supabaseAnonKey)
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.doOutput = true
+
+            val payload = JSONObject().apply {
+                put("email", email.trim())
+                put("password", pass)
+            }
+
+            OutputStreamWriter(conn.outputStream).use { it.write(payload.toString()) }
+            val code = conn.responseCode
+            val responseText = if (code in 200..299) {
+                conn.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+            }
+
+            if (code in 200..299) {
+                val json = JSONObject(responseText)
+                accessToken = json.optString("access_token", "active_session")
+                val user = json.optJSONObject("user")
+                currentUserId = user?.optString("id", "") ?: ""
+                currentUserEmail = email.trim()
+                val meta = user?.optJSONObject("user_metadata")
+                val metaName = meta?.optString("display_name", "") ?: ""
+                if (metaName.isNotBlank()) displayName = metaName
+                isAuthenticated = true
+                Result.success(Unit)
+            } else {
+                val errJson = try { JSONObject(responseText) } catch (e: Exception) { null }
+                val msg = errJson?.optString("error_description") ?: errJson?.optString("msg") ?: "Invalid email or password"
+                Result.failure(Exception(msg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun getOAuthUrl(provider: String, redirectUrl: String = "com.habittracker.app://callback"): String {
+        return "$supabaseUrl/auth/v1/authorize?provider=$provider&redirect_to=$redirectUrl"
+    }
+
+    fun signOut() {
+        accessToken = ""
+        currentUserId = ""
+        currentUserEmail = ""
+        isAuthenticated = false
+    }
 
     fun generateFriendCode(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

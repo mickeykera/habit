@@ -29,13 +29,17 @@ enum AppTab: Int, CaseIterable, Sendable {
 }
 
 struct ContentView: View {
+    @Environment(SupabaseSyncService.self) private var syncService
     @State private var selectedTab: AppTab = .today
     @State private var showAddHabitSheet = false
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Color.pageGround
-                .ignoresSafeArea()
+        if !syncService.isAuthenticated {
+            AuthView()
+        } else {
+            ZStack(alignment: .bottom) {
+                Color.pageGround
+                    .ignoresSafeArea()
 
             ZStack {
                 TodayView()
@@ -65,9 +69,10 @@ struct ContentView: View {
             floatingNavigationBar
                 .padding(.horizontal, 20)
                 .padding(.bottom, 12)
-        }
-        .sheet(isPresented: $showAddHabitSheet) {
-            AddHabitSheet()
+            }
+            .sheet(isPresented: $showAddHabitSheet) {
+                AddHabitSheet()
+            }
         }
     }
 
