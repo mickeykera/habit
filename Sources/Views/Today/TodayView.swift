@@ -1,6 +1,14 @@
 import SwiftUI
 import SwiftData
 
+enum TodayFilter: String, CaseIterable, Identifiable {
+    case all = "All"
+    case build = "Build"
+    case quit = "Quit"
+
+    var id: String { rawValue }
+}
+
 struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(filter: #Predicate<Habit> { !$0.isArchived },
@@ -8,13 +16,25 @@ struct TodayView: View {
     private var habits: [Habit]
 
     @State private var selectedDate: Date = Calendar.current.startOfDay(for: .now)
+    @State private var selectedFilter: TodayFilter = .all
     @State private var showAddSheet = false
+    @State private var showProfileSheet = false
 
     private var scheduledHabits: [Habit] {
         let calendar = Calendar.current
         let weekday = calendar.component(.weekday, from: selectedDate) - 1 // 0=Sun..6=Sat
         return habits.filter { habit in
-            habit.scheduleDays.isEmpty || habit.scheduleDays.contains(weekday)
+            let isScheduledToday = habit.scheduleDays.isEmpty || habit.scheduleDays.contains(weekday)
+            guard isScheduledToday else { return false }
+
+            switch selectedFilter {
+            case .all:
+                return true
+            case .build:
+                return habit.type == .build
+            case .quit:
+                return habit.type == .quit
+            }
         }
     }
 
@@ -24,131 +44,172 @@ struct TodayView: View {
         }.count
     }
 
-    private var dateHeaderString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMM d"
-        return formatter.string(from: selectedDate)
-    }
-
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 4) {
-                    HStack {
-                        Text(dateHeaderString)
-                            .font(.hostGrotesk(.medium, size: 32))
-                            .foregroundStyle(Color.primaryText)
-                            .tracking(-0.5)
-
-                        Spacer()
-
-                        Text("\(completedCount) / \(scheduledHabits.count)")
-                            .font(.hostGrotesk(.semibold, size: 20))
-                            .monospacedDigit()
-                            .foregroundStyle(Color.cobaltBlue)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-                }
-
-                // Week strip
-                WeekStripView(selectedDate: $selectedDate)
-
-                HairlineDivider()
-
-                // Habit list or empty state
-                if scheduledHabits.isEmpty {
-                    Spacer()
-                    VStack(spacing: 12) {
-                        Image(systemName: "plus.circle.dashed")
-                            .font(.system(size: 48))
-                            .foregroundStyle(Color.mutedText)
-
-                        Text("No habits yet")
-                            .font(.hostGrotesk(.medium, size: 20))
-                            .foregroundStyle(Color.secondaryText)
-
-                        Text("Tap + to add your first habit")
-                            .font(.hostGrotesk(.regular, size: 16))
-                            .foregroundStyle(Color.mutedText)
-                    }
-                    Spacer()
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(scheduledHabits) { habit in
-                                VStack(spacing: 0) {
-                                    HabitRowView(
-                                        habit: habit,
-                                        date: selectedDate,
-                                        log: logFor(habit: habit),
-                                        onToggle: {
-                                            toggleCompletion(for: habit)
-                                        },
-                                        onSlip: habit.type == .quit ? {
-                                            markSlip(for: habit)
-                                        } : nil
-                                    )
-
-                                    HairlineDivider()
-                                        .padding(.horizontal, 16)
+        VStack(spacing: 0) {
+            // Top Bar
+            HStack(alignment: .center) {
+                // Left: Filter Pill
+                Menu {
+                    ForEach(TodayFilter.allCases) { filter in
+                        Button {
+                            withAnimation(.snappySpring) {
+                                selectedFilter = filter
+                            }
+                        } label: {
+                            HStack {
+                                Text(filter.rawValue)
+                                if selectedFilter == filter {
+                                    Image(systemName: "checkmark")
                                 }
                             }
                         }
-                        .padding(.top, 8)
-                        .padding(.bottom, 80) // Space for FAB
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(selectedFilter.rawValue)
+                            .font(.hostGrotesk(.medium, size: 13))
+                            .foregroundStyle(Color.primaryText)
+
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Color.mutedText)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.cardSurface)
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.hairline, lineWidth: 1)
+                    )
+                }
+
+                Spacer()
+
+                // Center: Today title
+                VStack(spacing: 2) {
+                    Text("Today")
+                        .font(.hostGrotesk(.medium, size: 22))
+                        .foregroundStyle(Color.primaryText)
+
+                    Text("\(completedCount) / \(scheduledHabits.count)")
+                        .font(.hostGrotesk(.medium, size: 12))
+                        .monospacedDigit()
+                        .foregroundStyle(Color.cobaltBlue)
+                }
+
+                Spacer()
+
+                // Right: Profile/Status button
+                Button {
+                    showAddSheet = true
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.cardSurface)
+                            .frame(width: 34, height: 34)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.hairline, lineWidth: 1)
+                            )
+
+                        Image(systemName: "plus")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Color.cobaltBlue)
                     }
                 }
+                .buttonStyle(.plain)
             }
-            .background(Color.pageGround)
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 8)
 
-            // Floating add button
-            Button {
-                showAddSheet = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Circle().fill(Color.cobaltBlue))
-                    .shadow(color: .cobaltBlue.opacity(0.3), radius: 8, y: 4)
+            // 7-day Horizontal Week Strip
+            WeekStripView(selectedDate: $selectedDate)
+
+            HairlineDivider()
+                .padding(.top, 4)
+
+            // Habit List or Empty State
+            if scheduledHabits.isEmpty {
+                Spacer()
+                VStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.cobaltBlue.opacity(0.12))
+                            .frame(width: 64, height: 64)
+
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 28))
+                            .foregroundStyle(Color.cobaltBlue)
+                    }
+
+                    Text("No habits scheduled")
+                        .font(.hostGrotesk(.medium, size: 18))
+                        .foregroundStyle(Color.secondaryText)
+
+                    Text("Tap + to add or unfilter your habits")
+                        .font(.hostGrotesk(.regular, size: 14))
+                        .foregroundStyle(Color.mutedText)
+                }
+                .padding(.bottom, 80)
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 10) {
+                        ForEach(scheduledHabits) { habit in
+                            HabitRowView(
+                                habit: habit,
+                                date: selectedDate,
+                                log: logFor(habit: habit),
+                                onToggle: {
+                                    toggleCompletion(for: habit)
+                                },
+                                onSlip: habit.type == .quit ? {
+                                    markSlip(for: habit)
+                                } : nil
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 96) // Breathing room above floating navigation bar
+                }
             }
-            .padding(.trailing, 20)
-            .padding(.bottom, 20)
         }
+        .background(Color.pageGround)
         .sheet(isPresented: $showAddSheet) {
             AddHabitSheet()
         }
     }
 
-    // MARK: - Data helpers
+    // MARK: - Helpers
 
     private func logFor(habit: Habit) -> HabitLog? {
         let startOfDay = Calendar.current.startOfDay(for: selectedDate)
-        return habit.logs.first { log in
-            Calendar.current.isDate(log.date, inSameDayAs: startOfDay)
+        return habit.logs.first {
+            Calendar.current.isDate($0.date, inSameDayAs: startOfDay)
         }
     }
 
     private func toggleCompletion(for habit: Habit) {
-        HabitLog.toggleLog(for: habit, on: selectedDate, context: modelContext)
+        withAnimation(.snappySpring) {
+            HabitLog.toggleLog(
+                for: habit,
+                on: selectedDate,
+                context: modelContext
+            )
+        }
     }
 
     private func markSlip(for habit: Habit) {
-        let startOfDay = Calendar.current.startOfDay(for: selectedDate)
-        if let existingLog = logFor(habit: habit) {
-            existingLog.isSlip = true
-            existingLog.isCompleted = false
-        } else {
-            let log = HabitLog(
-                date: startOfDay,
-                isCompleted: false,
-                isSlip: true
+        withAnimation(.snappySpring) {
+            HabitLog.toggleLog(
+                for: habit,
+                on: selectedDate,
+                asSlip: true,
+                context: modelContext
             )
-            log.habit = habit
-            modelContext.insert(log)
         }
     }
 }

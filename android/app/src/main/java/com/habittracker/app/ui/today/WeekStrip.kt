@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,8 +23,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.habittracker.app.theme.CardSurface
 import com.habittracker.app.theme.CobaltBlue
 import com.habittracker.app.theme.CobaltLabel
+import com.habittracker.app.theme.Hairline
 import com.habittracker.app.theme.MutedText
 import com.habittracker.app.theme.PrimaryText
 import java.time.LocalDate
@@ -33,12 +37,12 @@ fun WeekStrip(
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dayLabels = listOf("S", "M", "T", "W", "T", "F", "S")
+    val dayLabels = listOf("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su")
 
-    // Find the Sunday of current selected week
-    val currentZeroBasedDay = selectedDate.dayOfWeek.value % 7
-    val sunday = selectedDate.minusDays(currentZeroBasedDay.toLong())
-    val weekDates = (0..6).map { sunday.plusDays(it.toLong()) }
+    // Find the Monday of current selected week
+    val currentZeroBasedDay = (selectedDate.dayOfWeek.value + 5) % 7 // Monday = 0
+    val monday = selectedDate.minusDays(currentZeroBasedDay.toLong())
+    val weekDates = (0..6).map { monday.plusDays(it.toLong()) }
     val today = LocalDate.now()
 
     Row(
@@ -53,26 +57,37 @@ fun WeekStrip(
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(20.dp))
+                    .then(
+                        if (isSelected) {
+                            Modifier
+                                .background(CardSurface)
+                                .border(1.5.dp, CobaltBlue, RoundedCornerShape(20.dp))
+                        } else {
+                            Modifier
+                        }
+                    )
                     .clickable { onDateSelected(date) }
-                    .padding(vertical = 4.dp, horizontal = 6.dp)
+                    .padding(vertical = 6.dp, horizontal = 4.dp)
+                    .height(64.dp)
             ) {
                 Text(
                     text = dayLabels[index],
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = if (isSelected) CobaltBlue else MutedText,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                 )
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
                         .then(
                             when {
                                 isSelected -> Modifier.background(CobaltBlue)
                                 isToday -> Modifier.border(1.dp, CobaltBlue.copy(alpha = 0.5f), CircleShape)
-                                else -> Modifier
+                                else -> Modifier.border(1.dp, Hairline, CircleShape)
                             }
                         ),
                     contentAlignment = Alignment.Center

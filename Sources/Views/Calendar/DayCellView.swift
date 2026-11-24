@@ -11,99 +11,68 @@ struct DayCellView: View {
 
     var body: some View {
         let dayNumber = calendar.component(.day, from: date)
+        let isPerfect = completionRate >= 0.999 && isCurrentMonth
 
-        Text("\(dayNumber)")
-            .font(hostGrotesk(.medium, size: 14))
-            .monospacedDigit()
-            .foregroundStyle(isCurrentMonth && completionRate >= 1.0 ? Color.cobaltLabel : Color.primaryText)
-            .opacity(isCurrentMonth ? 1.0 : 0.3)
-            .frame(maxWidth: .infinity)
-            .frame(height: 40)
-            .background(backgroundView)
-            .overlay(overlayRings)
-            .contentShape(Rectangle())
-    }
+        VStack(spacing: 2) {
+            ZStack {
+                // Circular stepped fill
+                Circle()
+                    .fill(backgroundFill)
+                    .frame(width: 32, height: 32)
 
-    // MARK: - Background
+                // Selection or border ring
+                if isSelected {
+                    Circle()
+                        .strokeBorder(Color.cobaltBlue, lineWidth: 2)
+                        .frame(width: 32, height: 32)
+                } else if isToday {
+                    Circle()
+                        .strokeBorder(Color.cobaltBlue.opacity(0.5), lineWidth: 1)
+                        .frame(width: 32, height: 32)
+                }
 
-    @ViewBuilder
-    private var backgroundView: some View {
-        if completionRate > 0 && isCurrentMonth {
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.cobaltBlue.opacity(intensityOpacity))
-        } else {
-            Color.clear
+                Text("\(dayNumber)")
+                    .font(.hostGrotesk(.medium, size: 13))
+                    .monospacedDigit()
+                    .foregroundStyle(isPerfect ? Color.cobaltLabel : Color.primaryText)
+                    .opacity(isCurrentMonth ? 1.0 : 0.25)
+            }
+
+            // Small dot under today's date
+            if isToday {
+                Circle()
+                    .fill(Color.cobaltBlue)
+                    .frame(width: 3, height: 3)
+            } else {
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: 3, height: 3)
+            }
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: 40)
+        .contentShape(Rectangle())
     }
 
-    private var intensityOpacity: Double {
+    private var backgroundFill: Color {
+        guard isCurrentMonth && completionRate > 0 else { return .clear }
         switch completionRate {
-        case 0:
-            return 0
-        case 0.001...0.50:
-            return 0.15
-        case 0.501...0.99:
-            return 0.35
+        case 0.001..<0.5:
+            return Color.cobaltBlue.opacity(0.18)
+        case 0.5..<0.999:
+            return Color.cobaltBlue.opacity(0.45)
         default:
-            return 1.0
-        }
-    }
-
-    // MARK: - Overlay Rings
-
-    @ViewBuilder
-    private var overlayRings: some View {
-        ZStack {
-            if isSelected {
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.cobaltBlue, lineWidth: 2)
-            }
-
-            if isToday && !isSelected {
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.hairline, lineWidth: 1)
-            }
+            return Color.cobaltBlue
         }
     }
 }
 
 #Preview {
-    HStack(spacing: 4) {
-        DayCellView(
-            date: .now,
-            completionRate: 0,
-            isToday: true,
-            isSelected: false,
-            isCurrentMonth: true
-        )
-        DayCellView(
-            date: .now,
-            completionRate: 0.4,
-            isToday: false,
-            isSelected: false,
-            isCurrentMonth: true
-        )
-        DayCellView(
-            date: .now,
-            completionRate: 0.75,
-            isToday: false,
-            isSelected: true,
-            isCurrentMonth: true
-        )
-        DayCellView(
-            date: .now,
-            completionRate: 1.0,
-            isToday: false,
-            isSelected: false,
-            isCurrentMonth: true
-        )
-        DayCellView(
-            date: .now,
-            completionRate: 0.5,
-            isToday: false,
-            isSelected: false,
-            isCurrentMonth: false
-        )
+    HStack(spacing: 6) {
+        DayCellView(date: .now, completionRate: 0, isToday: false, isSelected: false, isCurrentMonth: true)
+        DayCellView(date: .now, completionRate: 0.3, isToday: false, isSelected: false, isCurrentMonth: true)
+        DayCellView(date: .now, completionRate: 0.7, isToday: false, isSelected: false, isCurrentMonth: true)
+        DayCellView(date: .now, completionRate: 1.0, isToday: true, isSelected: true, isCurrentMonth: true)
     }
     .padding()
     .background(Color.pageGround)

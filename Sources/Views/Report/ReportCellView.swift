@@ -13,9 +13,9 @@ struct ReportCellView: View {
         ZStack {
             switch state {
             case .completed:
-                RoundedRectangle(cornerRadius: 3)
+                RoundedRectangle(cornerRadius: 3.5)
                     .fill(Color.cobaltBlue)
-                    .frame(width: 14, height: 14)
+                    .frame(width: 16, height: 16)
                     .overlay(
                         Image(systemName: "checkmark")
                             .font(.system(size: 9, weight: .bold))
@@ -23,23 +23,24 @@ struct ReportCellView: View {
                     )
 
             case .missed:
-                RoundedRectangle(cornerRadius: 3)
+                RoundedRectangle(cornerRadius: 3.5)
                     .stroke(Color.hairline, lineWidth: 1.5)
-                    .frame(width: 14, height: 14)
+                    .background(Color.cardSurface)
+                    .frame(width: 16, height: 16)
 
             case .notScheduled:
                 Text("—")
-                    .font(hostGrotesk(.medium, size: 12))
+                    .font(.hostGrotesk(.medium, size: 12))
                     .foregroundStyle(Color.mutedText)
             }
         }
-        .frame(height: 24)
+        .frame(width: 28, height: 26)
         .contentShape(Rectangle())
     }
 }
 
 #Preview {
-    HStack(spacing: 12) {
+    HStack(spacing: 8) {
         ReportCellView(state: .completed)
         ReportCellView(state: .missed)
         ReportCellView(state: .notScheduled)

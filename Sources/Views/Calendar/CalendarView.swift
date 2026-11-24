@@ -1,417 +1,567 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - Filter Type
+enum CalendarFilterScope: String, CaseIterable, Identifiable {
+    case overall = "Overall"
+    case build = "Build Only"
+    case quit = "Quit Only"
 
-enum FilterType: Hashable, Identifiable {
-    case all
-    case build
-    case quit
-    case specific(Habit)
-
-    var id: String {
-        switch self {
-        case .all: "all"
-        case .build: "build"
-        case .quit: "quit"
-        case .specific(let habit): "habit-\(habit.id.uuidString)"
-        }
-    }
-
-    var label: String {
-        switch self {
-        case .all: "All"
-        case .build: "Build"
-        case .quit: "Quit"
-        case .specific(let habit): habit.title
-        }
-    }
-
-    static func == (lhs: FilterType, rhs: FilterType) -> Bool {
-        lhs.id == rhs.id
-    }
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
+    var id: String { rawValue }
 }
-
-// MARK: - Month Data
-
-struct DayData: Identifiable {
-    let id: Date
-    let date: Date
-    let completedCount: Int
-    let scheduledCount: Int
-    let habits: [(habit: Habit, completed: Bool)]
-
-    var completionRate: Double {
-        guard scheduledCount > 0 else { return 0 }
-        return Double(completedCount) / Double(scheduledCount)
-    }
-}
-
-// MARK: - Calendar View
 
 struct CalendarView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(filter: #Predicate<Habit> { !$0.isArchived }) private var habits: [Habit]
+    @Query(filter: #Predicate<Habit> { !$0.isArchived },
+           sort: \Habit.sortOrder)
+    private var habits: [Habit]
 
     @State private var selectedMonth: Date = .now
-    @State private var selectedDay: Date?
-    @State private var filterType: FilterType = .all
-    @State private var monthData: [Date: DayData] = [:]
+    @State private var selectedDay: Date = Calendar.current.startOfDay(for: .now)
+    @State private var scopeFilter: CalendarFilterScope = .overall
+    @State private var selectedHabitId: UUID? = nil // nil = "All"
+    @State private var isShowingOverallRate: Bool = false
+    @State private var showAddHabitSheet: Bool = false
 
-    private let calendar = Calendar.current
-    private let weekdaySymbols = ["S", "M", "T", "W", "T", "F", "S"]
+    private let calendar: Calendar = {
+        var cal = Calendar.current
+        cal.firstWeekday = 2 // Monday start (M T W T F S S)
+        return cal
+    }()
+
+    private let weekdaySymbols = ["M", "T", "W", "T", "F", "S", "S"]
+
+    // MARK: - Filtered Habits
+    private var filteredHabits: [Habit] {
+        if let habitId = selectedHabitId {
+            return habits.filter { $0.id == habitId }
+        }
+        switch scopeFilter {
+        case .overall:
+            return habits
+        case .build:
+            return habits.filter { $0.type == .build }
+        case .quit:
+            return habits.filter { $0.type == .quit }
+        }
+    }
+
+    // MARK: - Month Dates
+    private var daysInSelectedMonth: [Date] {
+        guard let monthInterval = calendar.dateInterval(of: .month, for: selectedMonth),
+              let firstDay = calendar.date(from: calendar.dateComponents([.year, .month], from: selectedMonth))
+        else { return [] }
+
+        // Start grid from the Monday of the first week
+        let weekdayOfFirst = (calendar.component(.weekday, from: firstDay) + 5) % 7 // 0=Mon..6=Sun
+        guard let startDate = calendar.date(byAdding: .day, value: -weekdayOfFirst, to: firstDay) else {
+            return []
+        }
+
+        let totalDays = 42 // 6 rows of 7
+        return (0..<totalDays).compactMap { dayOffset in
+            calendar.date(byAdding: .day, value: dayOffset, to: startDate)
+        }
+    }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                monthHeader
-                filterRow
-                calendarGrid
-                if let selectedDay, let dayData = monthData[selectedDay] {
-                    dayDetailCard(dayData)
-                }
+                topBar
+                habitFilterStrip
+                monthlyCalendarCard
+                statsSummaryCard
+                doneTodayCard
             }
             .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 32)
+            .padding(.top, 10)
+            .padding(.bottom, 96) // Safe area above floating pill bar
         }
         .background(Color.pageGround)
-        .navigationTitle("Calendar")
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear { recomputeMonthData() }
-        .onChange(of: selectedMonth) { _, _ in recomputeMonthData() }
-        .onChange(of: filterType) { _, _ in recomputeMonthData() }
+        .sheet(isPresented: $showAddHabitSheet) {
+            AddHabitSheet()
+        }
     }
 
-    // MARK: - Month Header
+    // MARK: - Top Bar
+    private var topBar: some View {
+        HStack {
+            // Left: Filter/Sort Circular Button
+            Menu {
+                ForEach(CalendarFilterScope.allCases) { scope in
+                    Button {
+                        withAnimation(.snappySpring) {
+                            scopeFilter = scope
+                            selectedHabitId = nil
+                        }
+                    } label: {
+                        HStack {
+                            Text(scope.rawValue)
+                            if scopeFilter == scope && selectedHabitId == nil {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.cardSurface)
+                        .frame(width: 36, height: 36)
+                        .overlay(Circle().stroke(Color.hairline, lineWidth: 1))
 
-    private var monthHeader: some View {
-        VStack(spacing: 4) {
-            HStack {
-                Button { advanceMonth(-1) } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color.primaryText)
+                }
+            }
+
+            Spacer()
+
+            // Center: Overall ⌄ Dropdown
+            Menu {
+                ForEach(CalendarFilterScope.allCases) { scope in
+                    Button {
+                        withAnimation(.snappySpring) {
+                            scopeFilter = scope
+                            selectedHabitId = nil
+                        }
+                    } label: {
+                        HStack {
+                            Text(scope.rawValue)
+                            if scopeFilter == scope && selectedHabitId == nil {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(selectedHabitId != nil ? (habits.first(where: { $0.id == selectedHabitId })?.title ?? "Habit") : scopeFilter.rawValue)
+                        .font(.hostGrotesk(.medium, size: 16))
+                        .foregroundStyle(Color.primaryText)
+
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.mutedText)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.cardSurface)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.hairline, lineWidth: 1))
+            }
+
+            Spacer()
+
+            // Right: + Button
+            Button {
+                showAddHabitSheet = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.cardSurface)
+                        .frame(width: 36, height: 36)
+                        .overlay(Circle().stroke(Color.hairline, lineWidth: 1))
+
+                    Image(systemName: "plus")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.cobaltBlue)
+                }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    // MARK: - Habit Filter Strip
+    private var habitFilterStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                // "All" chip
+                let isAllSelected = selectedHabitId == nil
+                Button {
+                    withAnimation(.snappySpring) { selectedHabitId = nil }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.grid.2x2.fill")
+                            .font(.system(size: 12))
+                        Text("All")
+                            .font(.hostGrotesk(.medium, size: 13))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .foregroundStyle(isAllSelected ? Color.cobaltLabel : Color.primaryText)
+                    .background(isAllSelected ? Color.cobaltBlue : Color.cardSurface)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(isAllSelected ? Color.clear : Color.hairline, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+
+                // Each active habit chip
+                ForEach(habits) { habit in
+                    let isSelected = selectedHabitId == habit.id
+                    Button {
+                        withAnimation(.snappySpring) { selectedHabitId = habit.id }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: habit.iconName)
+                                .font(.system(size: 12))
+                            Text(habit.title)
+                                .font(.hostGrotesk(.medium, size: 13))
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
+                        .background(isSelected ? Color.cobaltBlue : Color.cardSurface)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(isSelected ? Color.clear : Color.hairline, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.vertical, 2)
+        }
+    }
+
+    // MARK: - Monthly Calendar Card
+    private var monthlyCalendarCard: some View {
+        VStack(spacing: 12) {
+            // Header: < 11/2026 >
+            HStack {
+                Button {
+                    changeMonth(by: -1)
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.primaryText)
+                        .frame(width: 32, height: 32)
                 }
 
                 Spacer()
 
-                Text(monthYearString)
-                    .font(hostGrotesk(.semibold, size: 20))
+                Text(monthHeaderTitle)
+                    .font(.hostGrotesk(.medium, size: 16))
                     .foregroundStyle(Color.primaryText)
 
                 Spacer()
 
-                Button { advanceMonth(1) } label: {
+                Button {
+                    changeMonth(by: 1)
+                } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Color.primaryText)
+                        .frame(width: 32, height: 32)
                 }
             }
+            .padding(.horizontal, 4)
 
-            Text(monthlySuccessRateString)
-                .font(hostGrotesk(.bold, size: 40))
-                .monospacedDigit()
-                .foregroundStyle(Color.cobaltBlue)
-
-            HStack(spacing: 16) {
-                Label("\(totalCompletions) done", systemImage: "checkmark.circle.fill")
-                    .font(hostGrotesk(.medium, size: 13))
-                    .monospacedDigit()
-                    .foregroundStyle(Color.secondaryText)
-
-                Label("\(longestStreak) day streak", systemImage: "flame.fill")
-                    .font(hostGrotesk(.medium, size: 13))
-                    .monospacedDigit()
-                    .foregroundStyle(Color.secondaryText)
-            }
-        }
-        .padding(.vertical, 8)
-    }
-
-    // MARK: - Filter Row
-
-    private var filterRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                filterPill(.all)
-                filterPill(.build)
-                filterPill(.quit)
-            }
-        }
-    }
-
-    private func filterPill(_ type: FilterType) -> some View {
-        let isActive = filterType == type
-        return Button {
-            withAnimation(.snappySpring) {
-                filterType = type
-            }
-        } label: {
-            Text(type.label)
-                .font(hostGrotesk(.medium, size: 13))
-                .foregroundStyle(isActive ? Color.inverseText : Color.primaryText)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 6)
-                .background(isActive ? Color.cobaltBlue : Color.cardSurface)
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule().stroke(Color.hairline, lineWidth: isActive ? 0 : 1)
-                )
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Calendar Grid
-
-    private var calendarGrid: some View {
-        let days = generateMonthDays()
-        return VStack(spacing: 0) {
-            // Weekday header
+            // Weekday Header M T W T F S S
             HStack(spacing: 0) {
-                ForEach(0..<7, id: \.self) { index in
-                    Text(weekdaySymbols[index])
-                        .font(hostGrotesk(.medium, size: 13))
+                ForEach(weekdaySymbols, id: \.self) { symbol in
+                    Text(symbol)
+                        .font(.hostGrotesk(.medium, size: 12))
                         .foregroundStyle(Color.mutedText)
                         .frame(maxWidth: .infinity)
                 }
             }
-            .padding(.bottom, 8)
 
-            // Day cells
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 4) {
-                ForEach(days, id: \.self) { date in
+            HairlineDivider()
+
+            // 7-column Calendar Grid
+            let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
+            LazyVGrid(columns: columns, spacing: 6) {
+                ForEach(daysInSelectedMonth, id: \.self) { date in
                     let isCurrentMonth = calendar.isDate(date, equalTo: selectedMonth, toGranularity: .month)
-                    let dayData = monthData[calendar.startOfDay(for: date)]
-                    let rate = dayData?.completionRate ?? 0
+                    let isToday = calendar.isDateInToday(date)
+                    let isSelected = calendar.isDate(date, inSameDayAs: selectedDay)
+                    let rate = completionRate(for: date)
 
                     DayCellView(
                         date: date,
                         completionRate: rate,
-                        isToday: calendar.isDateInToday(date),
-                        isSelected: selectedDay.map { calendar.isDate($0, inSameDayAs: date) } ?? false,
+                        isToday: isToday,
+                        isSelected: isSelected,
                         isCurrentMonth: isCurrentMonth
                     )
                     .onTapGesture {
                         withAnimation(.snappySpring) {
-                            if selectedDay.map({ calendar.isDate($0, inSameDayAs: date) }) == true {
-                                selectedDay = nil
-                            } else {
-                                selectedDay = calendar.startOfDay(for: date)
-                            }
+                            selectedDay = calendar.startOfDay(for: date)
                         }
                     }
                 }
             }
         }
-        .padding(12)
-        .insetCard()
+        .padding(14)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
     }
 
-    // MARK: - Day Detail Card
+    // MARK: - Stats Summary Card
+    private var statsSummaryCard: some View {
+        let stats = computeStats()
 
-    private func dayDetailCard(_ data: DayData) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            let pct = Int(data.completionRate * 100)
-            Text("\(pct)% — \(data.completedCount) of \(data.scheduledCount) habits")
-                .font(hostGrotesk(.semibold, size: 16))
-                .monospacedDigit()
-                .foregroundStyle(Color.primaryText)
+        return VStack(spacing: 16) {
+            // Centered Circular Progress Ring
+            VStack(spacing: 8) {
+                ZStack {
+                    // Track
+                    Circle()
+                        .stroke(Color.hairline, lineWidth: 9)
+                        .frame(width: 110, height: 110)
+
+                    // Progress
+                    Circle()
+                        .trim(from: 0, to: max(0.001, CGFloat(isShowingOverallRate ? stats.overallRate : stats.monthlyRate)))
+                        .stroke(
+                            Color.cobaltBlue,
+                            style: StrokeStyle(lineWidth: 9, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: 110, height: 110)
+                        .animation(.snappySpring, value: isShowingOverallRate)
+
+                    // Percentage Text
+                    VStack(spacing: 2) {
+                        Text("\(Int(round((isShowingOverallRate ? stats.overallRate : stats.monthlyRate) * 100)))%")
+                            .font(.hostGrotesk(.bold, size: 26))
+                            .monospacedDigit()
+                            .foregroundStyle(Color.cobaltBlue)
+
+                        Text(isShowingOverallRate ? "Overall Rate" : "Monthly Rate")
+                            .font(.hostGrotesk(.medium, size: 11))
+                            .foregroundStyle(Color.mutedText)
+                    }
+                }
+
+                // ⇄ Toggle Button
+                Button {
+                    withAnimation(.snappySpring) {
+                        isShowingOverallRate.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.left.arrow.right")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text(isShowingOverallRate ? "Show Monthly" : "Show Overall")
+                            .font(.hostGrotesk(.medium, size: 11))
+                    }
+                    .foregroundStyle(Color.secondaryText)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.pageGround)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.hairline, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 4)
 
             HairlineDivider()
 
-            ForEach(data.habits, id: \.habit.id) { entry in
-                HStack(spacing: 8) {
-                    Image(systemName: entry.completed ? "checkmark.circle.fill" : "xmark.circle")
-                        .foregroundStyle(entry.completed ? Color.cobaltBlue : Color.mutedText)
-                        .font(.system(size: 16))
+            // 2×2 KPI Grid
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                kpiCell(title: "Best Streaks", value: "\(stats.bestStreak) Day", icon: "flame.fill")
+                kpiCell(title: "Perfect Days", value: "\(stats.perfectDays) Day", icon: "star.fill")
+                kpiCell(title: "Habits Done", value: "\(stats.habitsDone)", icon: "checkmark.circle.fill")
+                kpiCell(title: "Daily Average", value: String(format: "%.1f", stats.dailyAverage), icon: "chart.line.uptrend.xyaxis")
+            }
+        }
+        .padding(16)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+    }
 
-                    Text(entry.habit.title)
-                        .font(hostGrotesk(.regular, size: 15))
-                        .foregroundStyle(Color.primaryText)
+    private func kpiCell(title: String, value: String, icon: String) -> some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(Color.cobaltBlue.opacity(0.12))
+                    .frame(width: 32, height: 32)
 
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color.cobaltBlue)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.hostGrotesk(.regular, size: 11))
+                    .foregroundStyle(Color.mutedText)
+
+                Text(value)
+                    .font(.hostGrotesk(.semibold, size: 14))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.primaryText)
+            }
+            Spacer()
+        }
+        .padding(10)
+        .background(Color.pageGround)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.hairline, lineWidth: 1))
+    }
+
+    // MARK: - Done Today Card
+    private var doneTodayCard: some View {
+        let completedHabitsForSelectedDay = filteredHabits.filter { habit in
+            let start = calendar.startOfDay(for: selectedDay)
+            return habit.logs.contains {
+                calendar.isDate($0.date, inSameDayAs: start) && $0.isCompleted
+            }
+        }
+
+        return VStack(spacing: 12) {
+            HStack {
+                Text("Done Today")
+                    .font(.hostGrotesk(.medium, size: 16))
+                    .foregroundStyle(Color.primaryText)
+
+                Spacer()
+
+                Text("\(completedHabitsForSelectedDay.count) completed")
+                    .font(.hostGrotesk(.medium, size: 13))
+                    .foregroundStyle(Color.mutedText)
+            }
+
+            HairlineDivider()
+
+            if completedHabitsForSelectedDay.isEmpty {
+                HStack {
                     Spacer()
+                    Text("No habits data for this date")
+                        .font(.hostGrotesk(.regular, size: 13))
+                        .foregroundStyle(Color.mutedText)
+                        .padding(.vertical, 8)
+                    Spacer()
+                }
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(completedHabitsForSelectedDay) { habit in
+                        HStack(spacing: 10) {
+                            Image(systemName: habit.iconName)
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color.cobaltBlue)
+
+                            Text(habit.title)
+                                .font(.hostGrotesk(.regular, size: 14))
+                                .foregroundStyle(Color.primaryText)
+
+                            Spacer()
+
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(Color.cobaltBlue)
+                        }
+                        .padding(.vertical, 4)
+                    }
                 }
             }
         }
         .padding(14)
-        .insetCard()
-        .transition(.opacity.combined(with: .move(edge: .top)))
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
     }
 
-    // MARK: - Computation
+    // MARK: - Helpers
 
-    private func recomputeMonthData() {
-        monthData = computeMonthData()
-    }
-
-    private func computeMonthData() -> [Date: DayData] {
-        let monthInterval = monthRange
-        let start = monthInterval.lowerBound
-        let end = monthInterval.upperBound
-
-        // Filter habits based on filterType
-        let filteredHabits: [Habit]
-        switch filterType {
-        case .all:
-            filteredHabits = habits
-        case .build:
-            filteredHabits = habits.filter { $0.type == .build }
-        case .quit:
-            filteredHabits = habits.filter { $0.type == .quit }
-        case .specific(let habit):
-            filteredHabits = [habit]
-        }
-
-        // Fetch all logs in the month range
-        let descriptor = FetchDescriptor<HabitLog>(
-            predicate: #Predicate<HabitLog> { log in
-                log.date >= start && log.date < end
-            }
-        )
-        let allLogs = (try? modelContext.fetch(descriptor)) ?? []
-
-        // Index logs by (habitID, date)
-        var logIndex: [String: HabitLog] = [:]
-        for log in allLogs {
-            if let habitID = log.habit?.id {
-                let key = "\(habitID)-\(calendar.startOfDay(for: log.date).timeIntervalSince1970)"
-                logIndex[key] = log
-            }
-        }
-
-        var result: [Date: DayData] = [:]
-        var currentDate = start
-
-        while currentDate < end {
-            let weekday = calendar.component(.weekday, from: currentDate)
-            var completedCount = 0
-            var scheduledCount = 0
-            var habitEntries: [(habit: Habit, completed: Bool)] = []
-
-            for habit in filteredHabits {
-                guard habit.isScheduled(on: weekday) else { continue }
-                scheduledCount += 1
-                let key = "\(habit.id)-\(currentDate.timeIntervalSince1970)"
-                let log = logIndex[key]
-                let completed = log?.isCompleted == true
-                if completed { completedCount += 1 }
-                habitEntries.append((habit: habit, completed: completed))
-            }
-
-            result[currentDate] = DayData(
-                id: currentDate,
-                date: currentDate,
-                completedCount: completedCount,
-                scheduledCount: scheduledCount,
-                habits: habitEntries
-            )
-
-            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
-        }
-
-        return result
-    }
-
-    // MARK: - Calendar Helpers
-
-    private var monthRange: Range<Date> {
-        let comps = calendar.dateComponents([.year, .month], from: selectedMonth)
-        let start = calendar.date(from: comps)!
-        let end = calendar.date(byAdding: .month, value: 1, to: start)!
-        return start..<end
-    }
-
-    private func generateMonthDays() -> [Date] {
-        let range = monthRange
-        let start = range.lowerBound
-        let firstWeekday = calendar.component(.weekday, from: start)
-
-        // Leading days from previous month (Sunday = 1)
-        let leadingDays = firstWeekday - calendar.firstWeekday
-        let adjustedLeading = (leadingDays + 7) % 7
-
-        var days: [Date] = []
-
-        // Previous month fill
-        for i in stride(from: adjustedLeading, through: 1, by: -1) {
-            if let date = calendar.date(byAdding: .day, value: -i, to: start) {
-                days.append(date)
-            }
-        }
-
-        // Current month days
-        var current = start
-        while current < range.upperBound {
-            days.append(current)
-            current = calendar.date(byAdding: .day, value: 1, to: current)!
-        }
-
-        // Trailing days to fill to complete rows of 7
-        let remainder = days.count % 7
-        if remainder > 0 {
-            let trailing = 7 - remainder
-            for i in 0..<trailing {
-                if let date = calendar.date(byAdding: .day, value: i, to: range.upperBound) {
-                    days.append(date)
-                }
-            }
-        }
-
-        return days
-    }
-
-    private func advanceMonth(_ value: Int) {
-        withAnimation(.snappySpring) {
-            selectedMonth = calendar.date(byAdding: .month, value: value, to: selectedMonth) ?? selectedMonth
-            selectedDay = nil
-        }
-    }
-
-    private var monthYearString: String {
+    private var monthHeaderTitle: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
+        formatter.dateFormat = "MM/yyyy"
         return formatter.string(from: selectedMonth)
     }
 
-    private var monthlySuccessRateString: String {
-        let today = calendar.startOfDay(for: .now)
-        let daysUpToToday = monthData.values.filter { $0.date <= today && $0.scheduledCount > 0 }
-        let totalScheduled = daysUpToToday.reduce(0) { $0 + $1.scheduledCount }
-        let totalCompleted = daysUpToToday.reduce(0) { $0 + $1.completedCount }
-        guard totalScheduled > 0 else { return "—" }
-        return "\(Int(Double(totalCompleted) / Double(totalScheduled) * 100))%"
-    }
-
-    private var totalCompletions: Int {
-        monthData.values.reduce(0) { $0 + $1.completedCount }
-    }
-
-    private var longestStreak: Int {
-        let sortedDays = monthData.values
-            .filter { $0.scheduledCount > 0 }
-            .sorted { $0.date < $1.date }
-        var longest = 0
-        var current = 0
-        for day in sortedDays {
-            if day.completionRate >= 1.0 {
-                current += 1
-                longest = max(longest, current)
-            } else {
-                current = 0
+    private func changeMonth(by amount: Int) {
+        if let newDate = calendar.date(byAdding: .month, value: amount, to: selectedMonth) {
+            withAnimation(.snappySpring) {
+                selectedMonth = newDate
             }
         }
-        return longest
+    }
+
+    private func completionRate(for date: Date) -> Double {
+        let weekday = calendar.component(.weekday, from: date) - 1 // 0=Sun..6=Sat
+        let scheduled = filteredHabits.filter { $0.scheduleDays.isEmpty || $0.scheduleDays.contains(weekday) }
+        guard !scheduled.isEmpty else { return 0 }
+
+        let start = calendar.startOfDay(for: date)
+        let done = scheduled.filter { habit in
+            habit.logs.contains { calendar.isDate($0.date, inSameDayAs: start) && $0.isCompleted }
+        }.count
+
+        return Double(done) / Double(scheduled.count)
+    }
+
+    private struct CalendarComputedStats {
+        let monthlyRate: Double
+        let overallRate: Double
+        let bestStreak: Int
+        let perfectDays: Int
+        let habitsDone: Int
+        let dailyAverage: Double
+    }
+
+    private func computeStats() -> CalendarComputedStats {
+        guard let monthInterval = calendar.dateInterval(of: .month, for: selectedMonth) else {
+            return CalendarComputedStats(monthlyRate: 0, overallRate: 0, bestStreak: 0, perfectDays: 0, habitsDone: 0, dailyAverage: 0)
+        }
+
+        var totalScheduled = 0
+        var totalDone = 0
+        var perfectDaysCount = 0
+
+        var date = monthInterval.start
+        while date < monthInterval.end {
+            let weekday = calendar.component(.weekday, from: date) - 1
+            let scheduled = filteredHabits.filter { $0.scheduleDays.isEmpty || $0.scheduleDays.contains(weekday) }
+
+            if !scheduled.isEmpty {
+                totalScheduled += scheduled.count
+                let start = calendar.startOfDay(for: date)
+                let completedOnDay = scheduled.filter { habit in
+                    habit.logs.contains { calendar.isDate($0.date, inSameDayAs: start) && $0.isCompleted }
+                }.count
+
+                totalDone += completedOnDay
+                if completedOnDay == scheduled.count {
+                    perfectDaysCount += 1
+                }
+            }
+            date = calendar.date(byAdding: .day, value: 1, to: date) ?? monthInterval.end
+        }
+
+        let mRate = totalScheduled > 0 ? Double(totalDone) / Double(totalScheduled) : 0
+
+        // Best streak across filtered habits
+        var maxStreak = 0
+        for habit in filteredHabits {
+            let streak = StreakCalculator.currentStreak(for: habit, asOf: Date.now, logs: habit.logs)
+            if streak > maxStreak { maxStreak = streak }
+        }
+
+        let daysInMonth = calendar.range(of: .day, in: .month, for: selectedMonth)?.count ?? 30
+        let avg = Double(totalDone) / Double(max(1, daysInMonth))
+
+        // Overall rate across all habit logs
+        let allLogs = filteredHabits.flatMap { $0.logs }
+        let overallDone = allLogs.filter { $0.isCompleted }.count
+        let oRate = allLogs.isEmpty ? mRate : Double(overallDone) / Double(max(1, allLogs.count))
+
+        return CalendarComputedStats(
+            monthlyRate: mRate,
+            overallRate: oRate,
+            bestStreak: maxStreak,
+            perfectDays: perfectDaysCount,
+            habitsDone: totalDone,
+            dailyAverage: avg
+        )
     }
 }
 
 #Preview {
-    NavigationStack {
-        CalendarView()
-    }
-    .modelContainer(for: [Habit.self, HabitLog.self], inMemory: true)
+    CalendarView()
+        .modelContainer(for: [Habit.self, HabitLog.self], inMemory: true)
 }

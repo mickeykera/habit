@@ -5,15 +5,20 @@ struct WeekStripView: View {
 
     @State private var weekOffset: Int = 0
 
-    private let calendar = Calendar.current
-    private let dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
+    private let calendar: Calendar = {
+        var cal = Calendar.current
+        cal.firstWeekday = 2 // Monday start (Mo..Su)
+        return cal
+    }()
+
+    private let dayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
     private var currentWeekDates: [Date] {
         let today = calendar.startOfDay(for: Date.now)
-        guard let baseWeekStart = calendar.dateInterval(of: .weekOfYear, for: today)?.start else {
+        guard let baseWeekInterval = calendar.dateInterval(of: .weekOfYear, for: today) else {
             return []
         }
-        guard let shiftedWeekStart = calendar.date(byAdding: .weekOfYear, value: weekOffset, to: baseWeekStart) else {
+        guard let shiftedWeekStart = calendar.date(byAdding: .weekOfYear, value: weekOffset, to: baseWeekInterval.start) else {
             return []
         }
         return (0..<7).compactMap { dayOffset in
@@ -22,39 +27,53 @@ struct WeekStripView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 6) {
             ForEach(currentWeekDates, id: \.self) { date in
-                let weekday = calendar.component(.weekday, from: date) - 1 // 0-based
+                let weekdayIndex = (calendar.component(.weekday, from: date) + 5) % 7 // Monday = 0 .. Sunday = 6
                 let dayNumber = calendar.component(.day, from: date)
                 let isSelected = calendar.isDate(date, inSameDayAs: selectedDate)
                 let isToday = calendar.isDateInToday(date)
 
                 Button {
-                    selectedDate = calendar.startOfDay(for: date)
-                } label: {
-                    VStack(spacing: 4) {
-                        Text(dayLabels[weekday])
-                            .font(.hostGrotesk(.medium, size: 13))
-                            .foregroundStyle(isSelected ? .white : .mutedText)
-
-                        Text("\(dayNumber)")
-                            .font(.hostGrotesk(.medium, size: 13))
-                            .monospacedDigit()
-                            .foregroundStyle(isSelected ? .white : .primaryText)
+                    withAnimation(.snappySpring) {
+                        selectedDate = calendar.startOfDay(for: date)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background {
-                        if isSelected {
+                } label: {
+                    VStack(spacing: 5) {
+                        Text(dayLabels[weekdayIndex])
+                            .font(.hostGrotesk(isSelected ? .semibold : .medium, size: 12))
+                            .foregroundStyle(isSelected ? Color.cobaltBlue : Color.mutedText)
+
+                        ZStack {
                             Circle()
-                                .fill(Color.cobaltBlue)
-                                .frame(width: 44, height: 44)
-                        } else if isToday {
-                            Circle()
-                                .strokeBorder(Color.cobaltBlue.opacity(0.3), lineWidth: 1)
-                                .frame(width: 44, height: 44)
+                                .fill(isSelected ? Color.cobaltBlue : Color.clear)
+                                .frame(width: 32, height: 32)
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(
+                                            isSelected
+                                                ? Color.clear
+                                                : (isToday ? Color.cobaltBlue.opacity(0.5) : Color.hairline),
+                                            lineWidth: 1
+                                        )
+                                )
+
+                            Text("\(dayNumber)")
+                                .font(.hostGrotesk(.medium, size: 13))
+                                .monospacedDigit()
+                                .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
                         }
                     }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 68)
+                    .background(
+                        RoundedRectangle(cornerRadius: 22)
+                            .fill(isSelected ? Color.cardSurface : Color.clear)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22)
+                            .strokeBorder(isSelected ? Color.cobaltBlue : Color.clear, lineWidth: 1.5)
+                    )
                 }
                 .buttonStyle(.plain)
             }
@@ -62,17 +81,16 @@ struct WeekStripView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .gesture(
-            DragGesture(minimumDistance: 50, coordinateSpace: .local)
+            DragGesture(minimumDistance: 40, coordinateSpace: .local)
                 .onEnded { value in
-                    if value.translation.width < -50 {
+                    if value.translation.width < -40 {
                         withAnimation(.snappySpring) {
                             weekOffset += 1
-                            // Select the same weekday in the new week
                             if let newDate = calendar.date(byAdding: .weekOfYear, value: 1, to: selectedDate) {
                                 selectedDate = calendar.startOfDay(for: newDate)
                             }
                         }
-                    } else if value.translation.width > 50 {
+                    } else if value.translation.width > 40 {
                         withAnimation(.snappySpring) {
                             weekOffset -= 1
                             if let newDate = calendar.date(byAdding: .weekOfYear, value: -1, to: selectedDate) {
@@ -83,7 +101,6 @@ struct WeekStripView: View {
                 }
         )
         .onChange(of: selectedDate) { _, newValue in
-            // Keep weekOffset in sync when selectedDate changes externally
             let today = calendar.startOfDay(for: Date.now)
             let weekDiff = calendar.dateComponents([.weekOfYear], from: today, to: newValue).weekOfYear ?? 0
             if weekDiff != weekOffset {

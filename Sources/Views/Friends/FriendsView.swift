@@ -1,8 +1,6 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - FriendsView
-
 struct FriendsView: View {
     @Environment(SupabaseSyncService.self) private var syncService
     @Environment(\.modelContext) private var modelContext
@@ -17,391 +15,430 @@ struct FriendsView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            // Top Bar
+            HStack {
+                // Balance spacing
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: 36, height: 36)
+
+                Spacer()
+
+                Text("Friends")
+                    .font(.hostGrotesk(.medium, size: 22))
+                    .foregroundStyle(Color.primaryText)
+
+                Spacer()
+
+                // Right circular + button
+                Button {
+                    showAddFriend = true
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.cardSurface)
+                            .frame(width: 36, height: 36)
+                            .overlay(Circle().stroke(Color.hairline, lineWidth: 1))
+
+                        Image(systemName: "plus")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color.cobaltBlue)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 8)
+
+            HairlineDivider()
+
             ScrollView {
-                VStack(spacing: 0) {
+                VStack(spacing: 16) {
                     if !syncService.isConfigured {
                         unconfiguredBanner
                     }
 
+                    // User Card
                     userCard
-                    HairlineDivider().padding(.vertical, 12)
+
+                    // Timeframe Picker
                     timeframePicker
-                    HairlineDivider().padding(.vertical, 12)
-                    leaderboard
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-            }
-            .background(Color.pageGround)
-            .navigationTitle("Friends")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showAddFriend = true
-                    } label: {
-                        Image(systemName: "person.badge.plus")
-                            .foregroundStyle(Color.cobaltBlue)
+
+                    // Leaderboard or Empty State
+                    if displayFriends.isEmpty {
+                        emptyStateView
+                    } else {
+                        leaderboardSection
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 96) // Floating bar padding
             }
-            .sheet(isPresented: $showAddFriend) {
-                addFriendSheet
-            }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(errorMessage ?? "Something went wrong.")
-            }
-            .task {
-                await refreshFriends()
-            }
+        }
+        .background(Color.pageGround)
+        .sheet(isPresented: $showAddFriend) {
+            addFriendSheet
+        }
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "Something went wrong.")
+        }
+        .task {
+            await refreshFriends()
         }
     }
 
-    // MARK: - Unconfigured Banner
+    // MARK: - Empty State View
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(Color.cobaltBlue.opacity(0.12))
+                    .frame(width: 72, height: 72)
 
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 30))
+                    .foregroundStyle(Color.cobaltBlue)
+            }
+            .padding(.top, 30)
+
+            Text("It's always nice to have someone by your side. Tap + to invite a friend.")
+                .font(.hostGrotesk(.medium, size: 15))
+                .foregroundStyle(Color.secondaryText)
+                .multilineTextAlignment(.center)
+                .lineSpacing(3)
+                .padding(.horizontal, 24)
+
+            Button {
+                showAddFriend = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .bold))
+                    Text("Add Friend")
+                        .font(.hostGrotesk(.medium, size: 14))
+                }
+                .foregroundStyle(Color.cobaltLabel)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .background(Color.cobaltBlue)
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+    }
+
+    // MARK: - Unconfigured Banner
     private var unconfiguredBanner: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: "info.circle.fill")
                     .foregroundStyle(Color.cobaltBlue)
                 Text("Friends sync not configured")
-                    .font(hostGrotesk(.semibold, size: 14))
+                    .font(.hostGrotesk(.semibold, size: 14))
                     .foregroundStyle(Color.primaryText)
             }
             Text("Add your Supabase credentials in Settings to enable cloud sync and compete with friends.")
-                .font(hostGrotesk(.regular, size: 13))
+                .font(.hostGrotesk(.regular, size: 13))
                 .foregroundStyle(Color.secondaryText)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .insetCard()
-        .padding(.bottom, 12)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hairline, lineWidth: 1))
     }
 
     // MARK: - User Card
-
     private var userCard: some View {
         HStack(spacing: 14) {
-            // Avatar
             Circle()
                 .fill(Color.cobaltBlue)
                 .frame(width: 44, height: 44)
                 .overlay(
                     Text(initials(from: syncService.displayName))
-                        .font(hostGrotesk(.semibold, size: 16))
+                        .font(.hostGrotesk(.semibold, size: 16))
                         .foregroundStyle(Color.cobaltLabel)
                 )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(syncService.displayName)
-                    .font(hostGrotesk(.semibold, size: 16))
+                    .font(.hostGrotesk(.semibold, size: 16))
                     .foregroundStyle(Color.primaryText)
-                Text("You")
-                    .font(hostGrotesk(.regular, size: 13))
-                    .foregroundStyle(Color.mutedText)
+
+                HStack(spacing: 4) {
+                    Text("Code: \(syncService.friendCode)")
+                        .font(.hostGrotesk(.regular, size: 12))
+                        .monospacedDigit()
+                        .foregroundStyle(Color.mutedText)
+
+                    Button {
+                        UIPasteboard.general.string = syncService.friendCode
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.cobaltBlue)
+                    }
+                }
             }
 
             Spacer()
 
             VStack(alignment: .trailing, spacing: 2) {
-                Text(userCompletionRate)
-                    .font(hostGrotesk(.bold, size: 24))
+                Text("100%")
+                    .font(.hostGrotesk(.bold, size: 20))
                     .foregroundStyle(Color.cobaltBlue)
                     .monospacedDigit()
-                HStack(spacing: 8) {
-                    statLabel(value: "\(userTotalCompletions)", label: "done")
-                    statLabel(value: "\(userStreak)d", label: "streak")
-                }
+
+                Text("Rank #1")
+                    .font(.hostGrotesk(.medium, size: 12))
+                    .foregroundStyle(Color.secondaryText)
             }
         }
         .padding(14)
         .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.cobaltBlue.opacity(0.3), lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.cobaltBlue.opacity(0.4), lineWidth: 1.5)
         )
     }
 
     // MARK: - Timeframe Picker
-
     private var timeframePicker: some View {
         HStack(spacing: 0) {
             ForEach(Timeframe.allCases, id: \.self) { tf in
+                let isSelected = timeframe == tf
                 Button {
-                    timeframe = tf
-                    Task { await refreshFriends() }
+                    withAnimation(.snappySpring) {
+                        timeframe = tf
+                    }
                 } label: {
-                    Text(tf.displayName)
-                        .font(hostGrotesk(.medium, size: 13))
-                        .foregroundStyle(timeframe == tf ? Color.cobaltLabel : Color.secondaryText)
+                    Text(tf.label)
+                        .font(.hostGrotesk(.medium, size: 13))
+                        .foregroundStyle(isSelected ? Color.cobaltLabel : Color.primaryText)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
-                        .background(timeframe == tf ? Color.cobaltBlue : Color.clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .background(
+                            isSelected ? Color.cobaltBlue : Color.clear
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
                 }
+                .buttonStyle(.plain)
             }
         }
         .padding(3)
         .background(Color.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 9))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 9)
                 .stroke(Color.hairline, lineWidth: 1)
         )
     }
 
-    // MARK: - Leaderboard
-
-    private var leaderboard: some View {
-        VStack(spacing: 0) {
+    // MARK: - Leaderboard Section
+    private var leaderboardSection: some View {
+        VStack(spacing: 8) {
             HStack {
                 Text("LEADERBOARD")
-                    .font(hostGrotesk(.semibold, size: 13))
+                    .font(.hostGrotesk(.semibold, size: 12))
                     .foregroundStyle(Color.mutedText)
                 Spacer()
             }
-            .padding(.bottom, 10)
 
-            if displayFriends.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "person.2.slash")
-                        .font(.system(size: 32))
-                        .foregroundStyle(Color.mutedText)
-                    Text("No friends yet")
-                        .font(hostGrotesk(.medium, size: 16))
-                        .foregroundStyle(Color.secondaryText)
-                    Text("Tap + to add friends by their code")
-                        .font(hostGrotesk(.regular, size: 13))
-                        .foregroundStyle(Color.mutedText)
-                }
-                .padding(.vertical, 32)
-                .frame(maxWidth: .infinity)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(displayFriends.enumerated()), id: \.element.id) { index, friend in
-                        friendRow(rank: index + 1, friend: friend)
-                        if index < displayFriends.count - 1 {
-                            HairlineDivider().padding(.leading, 52)
-                        }
+            VStack(spacing: 0) {
+                ForEach(Array(displayFriends.enumerated()), id: \.element.id) { index, friend in
+                    friendRow(rank: index + 1, friend: friend)
+                    if index < displayFriends.count - 1 {
+                        HairlineDivider().padding(.leading, 50)
                     }
                 }
-                .padding(.vertical, 4)
-                .insetCard()
             }
+            .background(Color.cardSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.hairline, lineWidth: 1)
+            )
         }
     }
 
     private func friendRow(rank: Int, friend: FriendStats) -> some View {
         HStack(spacing: 12) {
             Text("\(rank)")
-                .font(hostGrotesk(.semibold, size: 14))
+                .font(.hostGrotesk(.semibold, size: 13))
                 .foregroundStyle(Color.mutedText)
                 .monospacedDigit()
-                .frame(width: 20)
+                .frame(width: 18)
 
             Circle()
                 .fill(Color.inverseSurface)
                 .frame(width: 34, height: 34)
                 .overlay(
                     Text(friend.avatarInitials)
-                        .font(hostGrotesk(.medium, size: 13))
+                        .font(.hostGrotesk(.medium, size: 13))
                         .foregroundStyle(Color.inverseText)
                 )
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(friend.displayName)
-                    .font(hostGrotesk(.medium, size: 15))
+                    .font(.hostGrotesk(.medium, size: 15))
                     .foregroundStyle(Color.primaryText)
+
                 HStack(spacing: 6) {
-                    statLabel(value: "\(friend.totalCompletions)", label: "done")
-                    statLabel(value: "\(friend.currentStreak)d", label: "streak")
+                    Text("\(friend.totalCompletions) done")
+                        .font(.hostGrotesk(.regular, size: 12))
+                        .monospacedDigit()
+                        .foregroundStyle(Color.mutedText)
+
+                    Text("·")
+                        .foregroundStyle(Color.mutedText)
+
+                    Text("\(friend.currentStreak)d streak")
+                        .font(.hostGrotesk(.regular, size: 12))
+                        .monospacedDigit()
+                        .foregroundStyle(Color.mutedText)
                 }
             }
 
             Spacer()
 
             Text("\(Int(friend.completionRate * 100))%")
-                .font(hostGrotesk(.bold, size: 20))
+                .font(.hostGrotesk(.bold, size: 18))
                 .foregroundStyle(Color.cobaltBlue)
                 .monospacedDigit()
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
     }
 
     // MARK: - Add Friend Sheet
-
     private var addFriendSheet: some View {
         NavigationStack {
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
                 // Your code
                 VStack(alignment: .leading, spacing: 8) {
                     Text("YOUR FRIEND CODE")
-                        .font(hostGrotesk(.semibold, size: 13))
+                        .font(.hostGrotesk(.semibold, size: 12))
                         .foregroundStyle(Color.mutedText)
 
                     HStack {
                         Text(syncService.friendCode.isEmpty ? "------" : syncService.friendCode)
-                            .font(hostGrotesk(.bold, size: 28))
+                            .font(.hostGrotesk(.bold, size: 26))
                             .foregroundStyle(Color.primaryText)
                             .monospacedDigit()
-                            .tracking(4)
 
                         Spacer()
 
                         Button {
                             UIPasteboard.general.string = syncService.friendCode
                         } label: {
-                            Image(systemName: "doc.on.doc")
-                                .font(.system(size: 18))
-                                .foregroundStyle(Color.cobaltBlue)
+                            HStack(spacing: 4) {
+                                Image(systemName: "doc.on.doc")
+                                Text("Copy")
+                            }
+                            .font(.hostGrotesk(.medium, size: 13))
+                            .foregroundStyle(Color.cobaltBlue)
                         }
                     }
-                    .padding(16)
-                    .insetCard()
-
-                    Text("Share this code with friends so they can add you.")
-                        .font(hostGrotesk(.regular, size: 13))
-                        .foregroundStyle(Color.mutedText)
+                    .padding(14)
+                    .background(Color.cardSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.hairline, lineWidth: 1))
                 }
 
                 HairlineDivider()
 
-                // Add friend
+                // Add by code
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("ADD A FRIEND")
-                        .font(hostGrotesk(.semibold, size: 13))
+                    Text("ENTER FRIEND'S CODE")
+                        .font(.hostGrotesk(.semibold, size: 12))
                         .foregroundStyle(Color.mutedText)
 
-                    HStack(spacing: 10) {
-                        TextField("Friend code", text: $friendCodeInput)
-                            .font(hostGrotesk(.medium, size: 16))
+                    HStack {
+                        TextField("6-character code", text: $friendCodeInput)
+                            .font(.hostGrotesk(.regular, size: 16))
                             .textInputAutocapitalization(.characters)
                             .autocorrectionDisabled()
-                            .padding(12)
-                            .background(Color.cardSurface)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.hairline, lineWidth: 1)
-                            )
 
-                        Button {
-                            Task { await addFriend() }
-                        } label: {
-                            Text("Add")
-                                .font(hostGrotesk(.semibold, size: 15))
-                                .foregroundStyle(Color.cobaltLabel)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(Color.cobaltBlue)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        Button("Add") {
+                            addFriend()
                         }
-                        .disabled(friendCodeInput.count != 6)
+                        .font(.hostGrotesk(.semibold, size: 14))
+                        .foregroundStyle(Color.cobaltLabel)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Color.cobaltBlue)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .disabled(friendCodeInput.trimmingCharacters(in: .whitespaces).count != 6)
                     }
+                    .padding(12)
+                    .background(Color.cardSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.hairline, lineWidth: 1))
                 }
 
                 Spacer()
             }
-            .padding(20)
+            .padding(16)
             .background(Color.pageGround)
             .navigationTitle("Add Friend")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { showAddFriend = false }
-                        .font(hostGrotesk(.medium, size: 16))
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Close") { showAddFriend = false }
                         .foregroundStyle(Color.cobaltBlue)
                 }
             }
         }
     }
 
-    // MARK: - Helpers
+    private func addFriend() {
+        let code = friendCodeInput.trimmingCharacters(in: .whitespaces).uppercased()
+        guard code.count == 6 else { return }
 
-    private func statLabel(value: String, label: String) -> some View {
-        HStack(spacing: 2) {
-            Text(value)
-                .font(hostGrotesk(.semibold, size: 12))
-                .foregroundStyle(Color.secondaryText)
-                .monospacedDigit()
-            Text(label)
-                .font(hostGrotesk(.regular, size: 11))
-                .foregroundStyle(Color.mutedText)
+        Task {
+            do {
+                try await syncService.addFriend(code: code)
+                friendCodeInput = ""
+                showAddFriend = false
+            } catch {
+                errorMessage = error.localizedDescription
+                showError = true
+            }
+        }
+    }
+
+    private func refreshFriends() async {
+        guard syncService.isConfigured else { return }
+        do {
+            try await syncService.fetchFriendsStats(timeframe: timeframe)
+        } catch {
+            errorMessage = error.localizedDescription
+            showError = true
         }
     }
 
     private func initials(from name: String) -> String {
         let parts = name.split(separator: " ")
         if parts.count >= 2 {
-            return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
+            return "\(parts[0].prefix(1))\(parts[1].prefix(1))".uppercased()
         }
-        return String(name.prefix(2)).uppercased()
+        return name.prefix(2).uppercased()
     }
+}
 
-    private var userCompletionRate: String {
-        let habits = fetchActiveHabits()
-        let date = Calendar.current.startOfDay(for: .now)
-        let weekday = Calendar.current.component(.weekday, from: date)
-        let scheduled = habits.filter { $0.isScheduled(on: weekday) }
-        guard !scheduled.isEmpty else { return "—" }
-        let completed = scheduled.filter { habit in
-            habit.logs.contains { log in
-                Calendar.current.isDate(log.date, inSameDayAs: date) && log.isCompleted
-            }
-        }
-        return "\(Int(Double(completed.count) / Double(scheduled.count) * 100))%"
-    }
-
-    private var userTotalCompletions: Int {
-        let habits = fetchActiveHabits()
-        return habits.reduce(0) { total, habit in
-            total + habit.logs.filter(\.isCompleted).count
-        }
-    }
-
-    private var userStreak: Int {
-        let habits = fetchActiveHabits()
-        guard let first = habits.first else { return 0 }
-        return StreakCalculator.currentStreak(for: first, asOf: .now, logs: first.logs)
-    }
-
-    private func fetchActiveHabits() -> [Habit] {
-        let descriptor = FetchDescriptor<Habit>(
-            predicate: #Predicate<Habit> { !$0.isArchived },
-            sortBy: [SortDescriptor(\.sortOrder)]
-        )
-        return (try? modelContext.fetch(descriptor)) ?? []
-    }
-
-    private func refreshFriends() async {
-        guard syncService.isConfigured else { return }
-        do {
-            _ = try await syncService.fetchFriends(timeframe: timeframe)
-        } catch {
-            errorMessage = error.localizedDescription
-            showError = true
-        }
-    }
-
-    private func addFriend() async {
-        guard syncService.isConfigured else {
-            errorMessage = "Configure Supabase in Settings first."
-            showError = true
-            return
-        }
-        do {
-            try await syncService.addFriend(code: friendCodeInput)
-            friendCodeInput = ""
-            showAddFriend = false
-            await refreshFriends()
-        } catch {
-            errorMessage = error.localizedDescription
-            showError = true
-        }
-    }
+#Preview {
+    FriendsView()
+        .environment(SupabaseSyncService())
 }

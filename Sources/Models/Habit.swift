@@ -44,6 +44,22 @@ final class Habit {
         set { typeRawValue = newValue.rawValue }
     }
 
+    var iconName: String {
+        let t = title.lowercased()
+        if t.contains("read") || t.contains("book") { return "book.fill" }
+        if t.contains("water") || t.contains("drink") || t.contains("hydrat") { return "drop.fill" }
+        if t.contains("run") || t.contains("walk") || t.contains("gym") || t.contains("workout") || t.contains("exercise") { return "figure.run" }
+        if t.contains("sleep") || t.contains("bed") { return "bed.double.fill" }
+        if t.contains("meditat") || t.contains("mind") || t.contains("breath") { return "brain.head.profile" }
+        if t.contains("code") || t.contains("dev") || t.contains("program") { return "laptopcomputer" }
+        if t.contains("write") || t.contains("journal") || t.contains("diary") { return "pencil.line" }
+        if t.contains("caffeine") || t.contains("coffee") || t.contains("tea") { return "cup.and.saucer.fill" }
+        if t.contains("smoke") || t.contains("vape") || t.contains("nicotine") { return "wind" }
+        if t.contains("screen") || t.contains("phone") { return "iphone.slash" }
+        if type == .quit { return "leaf.fill" }
+        return "star.fill"
+    }
+
     /// Whether this habit is scheduled on a given weekday (1=Sunday…7=Saturday
     /// from Calendar, mapped to 0=Sunday…6=Saturday).
     func isScheduled(on weekday: Int) -> Bool {

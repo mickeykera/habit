@@ -3,8 +3,6 @@ import SwiftData
 import UserNotifications
 import UniformTypeIdentifiers
 
-// MARK: - SettingsView
-
 struct SettingsView: View {
     @Environment(SupabaseSyncService.self) private var syncService
     @Environment(\.modelContext) private var modelContext
@@ -15,7 +13,10 @@ struct SettingsView: View {
     @AppStorage("dailyReminderEnabled") private var dailyReminderEnabled: Bool = false
     @AppStorage("dailyReminderHour") private var dailyReminderHour: Int = 9
     @AppStorage("dailyReminderMinute") private var dailyReminderMinute: Int = 0
+    @AppStorage("dailyMoodsJson") private var dailyMoodsJson: String = "{}"
 
+    @State private var displayName: String = ""
+    @State private var isEditingName: Bool = false
     @State private var supabaseURL: String = ""
     @State private var supabaseAnonKey: String = ""
     @State private var showResetConfirmation = false
@@ -23,6 +24,12 @@ struct SettingsView: View {
     @State private var isSyncing = false
     @State private var syncStatusMessage: String?
     @State private var showSyncStatusAlert = false
+
+    // Sheets
+    @State private var showHabitManager = false
+    @State private var showPreferencesSheet = false
+    @State private var showSupabaseSheet = false
+    @State private var showDataBackupSheet = false
 
     @Query private var habits: [Habit]
     @Query private var habitLogs: [HabitLog]
@@ -47,22 +54,58 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                profileSyncSection
-                if !syncService.isConfigured {
-                    supabaseConfigSection
-                }
-                preferencesSection
-                dataManagementSection
-                aboutSection
+        VStack(spacing: 0) {
+            // Top Bar
+            HStack {
+                Spacer()
+                Text("Settings")
+                    .font(.hostGrotesk(.medium, size: 22))
+                    .foregroundStyle(Color.primaryText)
+                Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 20)
+            .padding(.top, 14)
+            .padding(.bottom, 8)
+
+            HairlineDivider()
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Profile Header
+                    profileHeaderCard
+
+                    // Daily Mood Strip Card
+                    dailyMoodStripCard
+
+                    // Settings Grouped Inset Card
+                    settingsCard
+
+                    // About Card
+                    aboutCard
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 96) // Floating nav bar padding
+            }
         }
         .background(Color.pageGround)
-        .navigationTitle("Settings")
-        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            displayName = syncService.displayName
+            supabaseURL = syncService.supabaseURL
+            supabaseAnonKey = syncService.supabaseAnonKey
+        }
+        .sheet(isPresented: $showHabitManager) {
+            habitManagerSheet
+        }
+        .sheet(isPresented: $showPreferencesSheet) {
+            preferencesSheet
+        }
+        .sheet(isPresented: $showSupabaseSheet) {
+            supabaseSheet
+        }
+        .sheet(isPresented: $showDataBackupSheet) {
+            dataBackupSheet
+        }
         .alert("Reset All Data", isPresented: $showResetConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete Everything", role: .destructive) {
@@ -85,426 +128,504 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Profile & Sync Section
+    // MARK: - 1. Profile Header Card
+    private var profileHeaderCard: some View {
+        HStack(spacing: 14) {
+            // Circular Avatar Initials
+            Circle()
+                .fill(Color.cobaltBlue)
+                .frame(width: 50, height: 50)
+                .overlay(
+                    Text(initials(from: syncService.displayName))
+                        .font(.hostGrotesk(.semibold, size: 18))
+                        .foregroundStyle(Color.cobaltLabel)
+                )
 
-    private var profileSyncSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Profile & Sync")
-
-            VStack(spacing: 0) {
-                // Display Name
-                settingsRow {
+            VStack(alignment: .leading, spacing: 3) {
+                if isEditingName {
                     HStack {
-                        Text("Display Name")
-                            .font(hostGrotesk(.regular, size: 16))
+                        TextField("Display Name", text: $displayName)
+                            .font(.hostGrotesk(.semibold, size: 16))
+                            .textFieldStyle(.plain)
+
+                        Button("Done") {
+                            syncService.displayName = displayName
+                            isEditingName = false
+                        }
+                        .font(.hostGrotesk(.medium, size: 13))
+                        .foregroundStyle(Color.cobaltBlue)
+                    }
+                } else {
+                    HStack(spacing: 6) {
+                        Text(syncService.displayName)
+                            .font(.hostGrotesk(.semibold, size: 16))
                             .foregroundStyle(Color.primaryText)
-                        Spacer()
-                        TextField("Your name", text: Binding(
-                            get: { syncService.displayName },
-                            set: { newValue in
-                                syncService.displayName = newValue
-                                UserDefaults.standard.set(newValue, forKey: "displayName")
-                            }
-                        ))
-                        .font(hostGrotesk(.regular, size: 16))
-                        .foregroundStyle(Color.secondaryText)
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 160)
+
+                        Button {
+                            isEditingName = true
+                        } label: {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.mutedText)
+                        }
                     }
                 }
 
-                HairlineDivider().padding(.horizontal, 16)
+                Text("Friend Code: \(syncService.friendCode)")
+                    .font(.hostGrotesk(.regular, size: 12))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.mutedText)
+            }
 
-                // Friend Code
-                settingsRow {
-                    HStack {
-                        Text("Friend Code")
-                            .font(hostGrotesk(.regular, size: 16))
-                            .foregroundStyle(Color.primaryText)
-                        Spacer()
-                        Text(syncService.friendCode.isEmpty ? "------" : syncService.friendCode)
-                            .font(hostGrotesk(.bold, size: 16))
-                            .foregroundStyle(Color.cobaltBlue)
-                            .monospacedDigit()
-                            .tracking(2)
-                        Button {
-                            UIPasteboard.general.string = syncService.friendCode
-                        } label: {
-                            Image(systemName: "doc.on.clipboard")
+            Spacer()
+
+            // Copy Friend Code Button
+            Button {
+                UIPasteboard.general.string = syncService.friendCode
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "doc.on.doc")
+                    Text("Copy")
+                }
+                .font(.hostGrotesk(.medium, size: 12))
+                .foregroundStyle(Color.cobaltBlue)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.pageGround)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.hairline, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(14)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+    }
+
+    // MARK: - 2. Daily Mood Strip Card
+    private var dailyMoodStripCard: some View {
+        let weekdays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+        let moodMap = loadMoods()
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Daily Moods")
+                    .font(.hostGrotesk(.semibold, size: 14))
+                    .foregroundStyle(Color.primaryText)
+
+                Spacer()
+
+                Text("Tap day to log")
+                    .font(.hostGrotesk(.regular, size: 11))
+                    .foregroundStyle(Color.mutedText)
+            }
+
+            HStack(spacing: 8) {
+                ForEach(0..<7, id: \.self) { index in
+                    let key = weekdayDateKey(for: index)
+                    let currentMood = moodMap[key]
+
+                    Button {
+                        cycleMood(for: key)
+                    } label: {
+                        VStack(spacing: 4) {
+                            Text(weekdays[index])
+                                .font(.hostGrotesk(.medium, size: 11))
+                                .foregroundStyle(Color.mutedText)
+
+                            ZStack {
+                                Circle()
+                                    .fill(currentMood != nil ? Color.cobaltBlue.opacity(0.12) : Color.pageGround)
+                                    .frame(width: 34, height: 34)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(
+                                                currentMood != nil ? Color.cobaltBlue.opacity(0.4) : Color.hairline,
+                                                style: StrokeStyle(lineWidth: 1, dash: currentMood != nil ? [] : [3, 2])
+                                            )
+                                    )
+
+                                if let mood = currentMood {
+                                    Text(mood)
+                                        .font(.system(size: 16))
+                                } else {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(Color.mutedText)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(14)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+    }
+
+    // MARK: - 3. Settings Card
+    private var settingsCard: some View {
+        VStack(spacing: 0) {
+            chevronRow(title: "Habit Manager", subtitle: "\(habits.count) habits", icon: "slider.horizontal.3") {
+                showHabitManager = true
+            }
+
+            HairlineDivider().padding(.horizontal, 14)
+
+            chevronRow(title: "Preferences", subtitle: "\(weekStartDay) start", icon: "gearshape") {
+                showPreferencesSheet = true
+            }
+
+            HairlineDivider().padding(.horizontal, 14)
+
+            chevronRow(title: "Friends Sync (Supabase)", subtitle: syncService.isConfigured ? "Connected" : "Offline", icon: "arrow.triangle.2.circlepath") {
+                showSupabaseSheet = true
+            }
+
+            HairlineDivider().padding(.horizontal, 14)
+
+            chevronRow(title: "Data & Backup", subtitle: "JSON / CSV / Reset", icon: "externaldrive") {
+                showDataBackupSheet = true
+            }
+        }
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+    }
+
+    private func chevronRow(title: String, subtitle: String? = nil, icon: String, action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.pageGround)
+                        .frame(width: 32, height: 32)
+                        .overlay(Circle().stroke(Color.hairline, lineWidth: 1))
+
+                    Image(systemName: icon)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color.cobaltBlue)
+                }
+
+                Text(title)
+                    .font(.hostGrotesk(.medium, size: 15))
+                    .foregroundStyle(Color.primaryText)
+
+                Spacer()
+
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.hostGrotesk(.regular, size: 13))
+                        .foregroundStyle(Color.mutedText)
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.mutedText)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - 4. About Card
+    private var aboutCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("About HabitTracker")
+                    .font(.hostGrotesk(.semibold, size: 14))
+                    .foregroundStyle(Color.primaryText)
+
+                Spacer()
+
+                Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0")")
+                    .font(.hostGrotesk(.medium, size: 12))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.secondaryText)
+            }
+
+            HairlineDivider()
+
+            Text("100% On-Device & Private. Built with SwiftUI, SwiftData, and zero-cost cloud sync. Habit names, notes, and personal metadata never leave your local device.")
+                .font(.hostGrotesk(.regular, size: 12))
+                .foregroundStyle(Color.mutedText)
+                .lineSpacing(3)
+        }
+        .padding(14)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hairline, lineWidth: 1))
+    }
+
+    // MARK: ==========================================
+    // MARK: SUB-SHEETS
+    // MARK: ==========================================
+
+    // MARK: Habit Manager Sheet
+    private var habitManagerSheet: some View {
+        NavigationStack {
+            List {
+                Section("Active Habits") {
+                    ForEach(habits.filter { !$0.isArchived }) { habit in
+                        HStack(spacing: 10) {
+                            Image(systemName: habit.iconName)
                                 .font(.system(size: 14))
                                 .foregroundStyle(Color.cobaltBlue)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(habit.title)
+                                    .font(.hostGrotesk(.medium, size: 15))
+                                Text(habit.type == .quit ? "Quit Habit" : "Build Habit")
+                                    .font(.hostGrotesk(.regular, size: 11))
+                                    .foregroundStyle(Color.mutedText)
+                            }
+
+                            Spacer()
+
+                            Button {
+                                withAnimation { habit.isArchived = true }
+                            } label: {
+                                Image(systemName: "archivebox")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.mutedText)
+                            }
+                            .buttonStyle(.borderless)
                         }
-                        .padding(.leading, 4)
+                    }
+                    .onDelete { indexSet in
+                        let active = habits.filter { !$0.isArchived }
+                        for index in indexSet {
+                            modelContext.delete(active[index])
+                        }
                     }
                 }
 
-                HairlineDivider().padding(.horizontal, 16)
+                let archived = habits.filter { $0.isArchived }
+                if !archived.isEmpty {
+                    Section("Archived Habits") {
+                        ForEach(archived) { habit in
+                            HStack {
+                                Text(habit.title)
+                                    .font(.hostGrotesk(.regular, size: 14))
+                                    .foregroundStyle(Color.mutedText)
 
-                // Connection Status
-                settingsRow {
-                    HStack {
-                        Text("Status")
-                            .font(hostGrotesk(.regular, size: 16))
-                            .foregroundStyle(Color.primaryText)
-                        Spacer()
-                        Circle()
-                            .fill(syncService.isConfigured ? Color.green : Color.red)
-                            .frame(width: 8, height: 8)
-                        Text(syncService.isConfigured ? "Connected" : "Not Configured")
-                            .font(hostGrotesk(.medium, size: 14))
-                            .foregroundStyle(Color.secondaryText)
+                                Spacer()
+
+                                Button("Unarchive") {
+                                    withAnimation { habit.isArchived = false }
+                                }
+                                .font(.hostGrotesk(.medium, size: 12))
+                                .foregroundStyle(Color.cobaltBlue)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Habit Manager")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showHabitManager = false }
+                        .foregroundStyle(Color.cobaltBlue)
+                }
+            }
+        }
+    }
+
+    // MARK: Preferences Sheet
+    private var preferencesSheet: some View {
+        NavigationStack {
+            Form {
+                Section("Calendar") {
+                    Picker("Week starts on", selection: $weekStartDay) {
+                        Text("Monday").tag("Monday")
+                        Text("Sunday").tag("Sunday")
                     }
                 }
 
-                HairlineDivider().padding(.horizontal, 16)
+                Section("Habit Defaults") {
+                    Picker("Default habit type", selection: $defaultHabitType) {
+                        Text("Build").tag("build")
+                        Text("Quit").tag("quit")
+                    }
+                }
 
-                // Sync Now Button
-                settingsRow {
+                Section("Interaction") {
+                    Toggle("Haptic Feedback", isOn: $hapticsEnabled)
+                }
+
+                Section("Daily Reminder") {
+                    Toggle("Daily Reminder", isOn: $dailyReminderEnabled)
+                        .onChange(of: dailyReminderEnabled) { _, enabled in
+                            if enabled { requestNotificationPermission() } else { cancelDailyReminder() }
+                        }
+
+                    if dailyReminderEnabled {
+                        DatePicker("Time", selection: reminderTime, displayedComponents: .hourAndMinute)
+                    }
+                }
+            }
+            .navigationTitle("Preferences")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showPreferencesSheet = false }
+                        .foregroundStyle(Color.cobaltBlue)
+                }
+            }
+        }
+    }
+
+    // MARK: Supabase Sheet
+    private var supabaseSheet: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Supabase Credentials"), footer: Text("Connect to your free Supabase instance with anonymous PostgreSQL RLS.")) {
+                    TextField("Supabase URL", text: $supabaseURL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(.URL)
+
+                    TextField("Anon Key", text: $supabaseAnonKey)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+
+                    Button("Save Configuration") {
+                        syncService.configure(url: supabaseURL, anonKey: supabaseAnonKey)
+                        showSupabaseSheet = false
+                    }
+                    .disabled(supabaseURL.isEmpty || supabaseAnonKey.isEmpty)
+                }
+
+                Section("Sync Now") {
                     Button {
-                        Task {
-                            await performSync()
-                        }
+                        Task { await performSync() }
                     } label: {
                         HStack {
-                            Spacer()
                             if isSyncing {
-                                ProgressView()
-                                    .tint(Color.cobaltBlue)
-                                    .padding(.trailing, 6)
+                                ProgressView().padding(.trailing, 4)
                             }
-                            Text(isSyncing ? "Syncing…" : "Sync Now")
-                                .font(hostGrotesk(.semibold, size: 16))
-                                .foregroundStyle(Color.cobaltBlue)
-                            Spacer()
+                            Text(isSyncing ? "Syncing…" : "Sync Daily Aggregate Now")
                         }
-                        .padding(.vertical, 4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.cobaltBlue, lineWidth: 1)
-                        )
                     }
                     .disabled(isSyncing || !syncService.isConfigured)
                 }
-
-                // Privacy Notice
-                HStack(spacing: 6) {
-                    Image(systemName: "lock.shield.fill")
-                        .font(.system(size: 12))
+            }
+            .navigationTitle("Friends Sync")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showSupabaseSheet = false }
                         .foregroundStyle(Color.cobaltBlue)
-                    Text("Habit titles never leave your device. Only anonymized completion counts are synced.")
-                        .font(hostGrotesk(.regular, size: 12))
-                        .foregroundStyle(Color.mutedText)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 12)
-                .padding(.top, 4)
             }
-            .insetCard()
         }
     }
 
-    // MARK: - Supabase Configuration Section
-
-    private var supabaseConfigSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Supabase Configuration")
-
-            VStack(spacing: 0) {
-                settingsRow {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Connect to Supabase to enable friend sync.")
-                            .font(hostGrotesk(.regular, size: 14))
-                            .foregroundStyle(Color.secondaryText)
-
-                        TextField("Supabase URL", text: $supabaseURL)
-                            .font(hostGrotesk(.regular, size: 15))
-                            .textContentType(.URL)
-                            .autocorrectionDisabled()
-                            .textInputAutocapitalization(.never)
-                            .keyboardType(.URL)
-                            .padding(10)
-                            .background(Color.pageGround)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.hairline, lineWidth: 1)
-                            )
-
-                        TextField("Anon Key", text: $supabaseAnonKey)
-                            .font(hostGrotesk(.regular, size: 15))
-                            .autocorrectionDisabled()
-                            .textInputAutocapitalization(.never)
-                            .padding(10)
-                            .background(Color.pageGround)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.hairline, lineWidth: 1)
-                            )
-
-                        Button {
-                            syncService.configure(url: supabaseURL, anonKey: supabaseAnonKey)
-                        } label: {
-                            Text("Connect")
-                                .font(hostGrotesk(.semibold, size: 16))
-                                .foregroundStyle(Color.cobaltLabel)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .background(Color.cobaltBlue)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                        .disabled(supabaseURL.trimmingCharacters(in: .whitespaces).isEmpty ||
-                                  supabaseAnonKey.trimmingCharacters(in: .whitespaces).isEmpty)
-
-                        Text("Create a free Supabase project, run schema.sql, then paste your URL and anon key above.")
-                            .font(hostGrotesk(.regular, size: 12))
-                            .foregroundStyle(Color.mutedText)
-                    }
-                }
-            }
-            .insetCard()
-        }
-    }
-
-    // MARK: - Preferences Section
-
-    private var preferencesSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Preferences")
-
-            VStack(spacing: 0) {
-                // Week starts on
-                settingsRow {
-                    HStack {
-                        Text("Week starts on")
-                            .font(hostGrotesk(.regular, size: 16))
-                            .foregroundStyle(Color.primaryText)
-                        Spacer()
-                        Picker("", selection: $weekStartDay) {
-                            Text("Monday").tag("Monday")
-                            Text("Sunday").tag("Sunday")
-                        }
-                        .pickerStyle(.menu)
-                        .tint(Color.cobaltBlue)
-                    }
-                }
-
-                HairlineDivider().padding(.horizontal, 16)
-
-                // Default habit type
-                settingsRow {
-                    HStack {
-                        Text("Default habit type")
-                            .font(hostGrotesk(.regular, size: 16))
-                            .foregroundStyle(Color.primaryText)
-                        Spacer()
-                        Picker("", selection: $defaultHabitType) {
-                            Text("Build").tag("build")
-                            Text("Quit").tag("quit")
-                        }
-                        .pickerStyle(.menu)
-                        .tint(Color.cobaltBlue)
-                    }
-                }
-
-                HairlineDivider().padding(.horizontal, 16)
-
-                // Haptics
-                settingsRow {
-                    Toggle(isOn: $hapticsEnabled) {
-                        Text("Haptics")
-                            .font(hostGrotesk(.regular, size: 16))
-                            .foregroundStyle(Color.primaryText)
-                    }
-                    .tint(Color.cobaltBlue)
-                }
-
-                HairlineDivider().padding(.horizontal, 16)
-
-                // Daily Reminder
-                settingsRow {
-                    VStack(spacing: 8) {
-                        Toggle(isOn: $dailyReminderEnabled) {
-                            Text("Daily reminder")
-                                .font(hostGrotesk(.regular, size: 16))
-                                .foregroundStyle(Color.primaryText)
-                        }
-                        .tint(Color.cobaltBlue)
-                        .onChange(of: dailyReminderEnabled) { _, enabled in
-                            if enabled {
-                                requestNotificationPermission()
-                            } else {
-                                cancelDailyReminder()
-                            }
-                        }
-
-                        if dailyReminderEnabled {
-                            DatePicker(
-                                "Time",
-                                selection: reminderTime,
-                                displayedComponents: .hourAndMinute
-                            )
-                            .font(hostGrotesk(.regular, size: 16))
-                            .tint(Color.cobaltBlue)
-                        }
-                    }
-                }
-            }
-            .insetCard()
-        }
-    }
-
-    // MARK: - Data Management Section
-
-    private var dataManagementSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Data Management")
-
-            VStack(spacing: 0) {
-                // Export JSON
-                settingsRow {
+    // MARK: Data & Backup Sheet
+    private var dataBackupSheet: some View {
+        NavigationStack {
+            List {
+                Section("Export") {
                     Button {
                         exportJSON()
                     } label: {
-                        HStack {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 14))
-                            Text("Export as JSON")
-                                .font(hostGrotesk(.regular, size: 16))
-                            Spacer()
-                        }
-                        .foregroundStyle(Color.primaryText)
+                        Label("Export Data as JSON", systemImage: "square.and.arrow.up")
                     }
-                }
 
-                HairlineDivider().padding(.horizontal, 16)
-
-                // Export CSV
-                settingsRow {
                     Button {
                         exportCSV()
                     } label: {
-                        HStack {
-                            Image(systemName: "tablecells")
-                                .font(.system(size: 14))
-                            Text("Export as CSV")
-                                .font(hostGrotesk(.regular, size: 16))
-                            Spacer()
-                        }
-                        .foregroundStyle(Color.primaryText)
+                        Label("Export Logs as CSV", systemImage: "tablecells")
                     }
                 }
 
-                HairlineDivider().padding(.horizontal, 16)
-
-                // Import Backup
-                settingsRow {
+                Section("Import") {
                     Button {
                         showImporter = true
                     } label: {
-                        HStack {
-                            Image(systemName: "square.and.arrow.down")
-                                .font(.system(size: 14))
-                            Text("Import Backup")
-                                .font(hostGrotesk(.regular, size: 16))
-                            Spacer()
-                        }
-                        .foregroundStyle(Color.primaryText)
+                        Label("Import JSON Backup", systemImage: "square.and.arrow.down")
                     }
                 }
 
-                HairlineDivider().padding(.horizontal, 16)
-
-                // Reset All Data
-                settingsRow {
-                    Button {
+                Section {
+                    Button(role: .destructive) {
                         showResetConfirmation = true
                     } label: {
-                        HStack {
-                            Image(systemName: "trash")
-                                .font(.system(size: 14))
-                            Text("Reset All Data")
-                                .font(hostGrotesk(.regular, size: 16))
-                            Spacer()
-                        }
-                        .foregroundStyle(.red)
+                        Label("Reset All Data", systemImage: "trash")
+                            .foregroundStyle(.red)
                     }
                 }
             }
-            .insetCard()
-        }
-    }
-
-    // MARK: - About Section
-
-    private var aboutSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("About")
-
-            VStack(spacing: 0) {
-                settingsRow {
-                    HStack {
-                        Text("Version")
-                            .font(hostGrotesk(.regular, size: 16))
-                            .foregroundStyle(Color.primaryText)
-                        Spacer()
-                        Text("1.0.0")
-                            .font(hostGrotesk(.regular, size: 14))
-                            .monospacedDigit()
-                            .foregroundStyle(Color.secondaryText)
-                    }
-                }
-
-                HairlineDivider().padding(.horizontal, 16)
-
-                settingsRow {
-                    HStack {
-                        Text("Build")
-                            .font(hostGrotesk(.regular, size: 16))
-                            .foregroundStyle(Color.primaryText)
-                        Spacer()
-                        Text(buildInfo)
-                            .font(hostGrotesk(.regular, size: 14))
-                            .foregroundStyle(Color.secondaryText)
-                    }
-                }
-
-                HairlineDivider().padding(.horizontal, 16)
-
-                settingsRow {
-                    Text("Made with SwiftUI & SwiftData")
-                        .font(hostGrotesk(.regular, size: 14))
-                        .foregroundStyle(Color.mutedText)
-                        .frame(maxWidth: .infinity, alignment: .center)
+            .navigationTitle("Data & Backup")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showDataBackupSheet = false }
+                        .foregroundStyle(Color.cobaltBlue)
                 }
             }
-            .insetCard()
         }
     }
 
-    // MARK: - Helpers
-
-    private var buildInfo: String {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
-        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
-        return "\(version) (\(build))"
+    // MARK: - Mood Helpers
+    private func loadMoods() -> [String: String] {
+        guard let data = dailyMoodsJson.data(using: .utf8),
+              let dict = try? JSONDecoder().decode([String: String].self, from: data)
+        else { return [:] }
+        return dict
     }
 
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title.uppercased())
-            .font(hostGrotesk(.semibold, size: 13))
-            .foregroundStyle(Color.mutedText)
-            .padding(.horizontal, 4)
-            .padding(.bottom, 8)
+    private func saveMoods(_ dict: [String: String]) {
+        guard let data = try? JSONEncoder().encode(dict),
+              let json = String(data: data, encoding: .utf8)
+        else { return }
+        dailyMoodsJson = json
     }
 
-    private func settingsRow<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+    private func weekdayDateKey(for index: Int) -> String {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date.now)
+        let weekday = cal.component(.weekday, from: today)
+        let offset = (weekday + 5) % 7 // Monday = 0
+        let mon = cal.date(byAdding: .day, value: -offset, to: today) ?? today
+        let target = cal.date(byAdding: .day, value: index, to: mon) ?? mon
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: target)
     }
 
-    // MARK: - Actions
+    private func cycleMood(for key: String) {
+        let moods = ["😊", "🙂", "😐", "😔", "😴"]
+        var current = loadMoods()
+        if let existing = current[key], let idx = moods.firstIndex(of: existing) {
+            if idx + 1 < moods.count {
+                current[key] = moods[idx + 1]
+            } else {
+                current.removeValue(forKey: key)
+            }
+        } else {
+            current[key] = moods[0]
+        }
+        saveMoods(current)
+    }
+
+    // MARK: - Helpers & Actions
+    private func initials(from name: String) -> String {
+        let parts = name.split(separator: " ")
+        if parts.count >= 2 {
+            return "\(parts[0].prefix(1))\(parts[1].prefix(1))".uppercased()
+        }
+        return name.prefix(2).uppercased()
+    }
 
     @MainActor
     private func performSync() async {
@@ -526,7 +647,6 @@ struct SettingsView: View {
         let scheduledCount = scheduledToday.count
         let rate = scheduledCount > 0 ? Double(completedCount) / Double(scheduledCount) : 0.0
 
-        // Streak from longest current active habit
         let maxStreak = activeHabits.map {
             StreakCalculator.currentStreak(for: $0, asOf: today, logs: $0.logs)
         }.max() ?? 0
@@ -545,8 +665,6 @@ struct SettingsView: View {
             showSyncStatusAlert = true
         }
     }
-
-    // MARK: - Notifications
 
     private func requestNotificationPermission() {
         let center = UNUserNotificationCenter.current()
@@ -576,16 +694,12 @@ struct SettingsView: View {
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
         let request = UNNotificationRequest(identifier: "habittracker.daily", content: content, trigger: trigger)
-
         center.add(request)
     }
 
     private func cancelDailyReminder() {
-        UNUserNotificationCenter.current()
-            .removePendingNotificationRequests(withIdentifiers: ["habittracker.daily"])
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["habittracker.daily"])
     }
-
-    // MARK: - Export / Import
 
     @MainActor
     private func exportJSON() {
@@ -599,11 +713,8 @@ struct SettingsView: View {
         )
 
         guard let data = try? encoder.encode(exportData) else { return }
-
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("HabitTracker-Backup.json")
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("HabitTracker-Backup.json")
         try? data.write(to: tempURL)
-
         presentShareSheet(for: tempURL)
     }
 
@@ -620,10 +731,8 @@ struct SettingsView: View {
             csv += "\(habitID),\"\(title)\",\(type),\(date),\(log.isCompleted),\(log.isSlip)\n"
         }
 
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("HabitTracker-Export.csv")
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("HabitTracker-Export.csv")
         try? csv.write(to: tempURL, atomically: true, encoding: .utf8)
-
         presentShareSheet(for: tempURL)
     }
 
@@ -635,14 +744,11 @@ struct SettingsView: View {
         let rootVC = windowScene.windows.first(where: \.isKeyWindow)?.rootViewController else { return }
 
         let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-
-        // iPad popover anchor
         if let popover = activityVC.popoverPresentationController {
             popover.sourceView = rootVC.view
             popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
             popover.permittedArrowDirections = []
         }
-
         rootVC.present(activityVC, animated: true)
     }
 
@@ -652,12 +758,10 @@ struct SettingsView: View {
               url.startAccessingSecurityScopedResource() else { return }
 
         defer { url.stopAccessingSecurityScopedResource() }
-
         guard let data = try? Data(contentsOf: url) else { return }
 
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-
         guard let payload = try? decoder.decode(ExportPayload.self, from: data) else { return }
 
         for exportHabit in payload.habits {
@@ -681,9 +785,7 @@ struct SettingsView: View {
                 isSlip: exportLog.isSlip
             )
             let habitID = exportLog.habitID
-            let descriptor = FetchDescriptor<Habit>(
-                predicate: #Predicate<Habit> { $0.id == habitID }
-            )
+            let descriptor = FetchDescriptor<Habit>(predicate: #Predicate<Habit> { $0.id == habitID })
             log.habit = try? modelContext.fetch(descriptor).first
             modelContext.insert(log)
         }
@@ -691,21 +793,16 @@ struct SettingsView: View {
         try? modelContext.save()
     }
 
-    // MARK: - Reset
-
     private func resetAllData() {
         do {
             try modelContext.delete(model: HabitLog.self)
             try modelContext.delete(model: Habit.self)
             try modelContext.save()
-        } catch {
-            // Deletion completed or handled
-        }
+        } catch { }
     }
 }
 
 // MARK: - Export Data Models
-
 private struct ExportPayload: Codable {
     let habits: [ExportHabit]
     let logs: [ExportLog]
